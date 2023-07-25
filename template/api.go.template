@@ -1,0 +1,48 @@
+package api
+
+import "github.com/gogf/gf/v2/frame/g"
+
+type {{.ClassName}}Base struct {
+}
+
+// Add{{.ClassName}}Req 新增
+type Add{{.ClassName}}Req struct {
+	g.Meta `path:"/{{.TableName}}" method:"post" tags:"{{.TableComment}}" summary:"新增"`
+	{{.ClassName}}Base
+}
+
+type Add{{.ClassName}}Res struct {
+	Id int `json:"id" dc:"id"`
+}
+
+// Delete{{.ClassName}}Req 删除
+type Delete{{.ClassName}}Req struct {
+	g.Meta `path:"/{{.TableName}}" method:"delete" tags:"{{.TableComment}}" summary:"删除"`
+	Id     int `json:"id" v:"required#{{.TableComment}}ID不能为空" dc:"id"`
+}
+
+type Delete{{.ClassName}}Res struct{
+	Success bool `json:"success"      description:"是否成功"`
+}
+
+// Update{{.ClassName}}Req 更新
+type Update{{.ClassName}}Req struct {
+	g.Meta `path:"/{{.TableName}}" method:"put" tags:"{{.TableComment}}" summary:"更新"`
+	Id     int `json:"id" v:"required#{{.TableComment}}ID不能为空" dc:"id"`
+	{{.ClassName}}Base
+}
+
+type Update{{.ClassName}}Res struct{
+	Success bool `json:"success"      description:"是否成功"`
+}
+
+// Page{{.ClassName}}Req 获取
+type Page{{.ClassName}}Req struct {
+	g.Meta `path:"/{{.TableName}}/page" method:"get" tags:"{{.TableComment}}" summary:"获取分页"`
+	CommonPaginationReq
+}
+
+type Page{{.ClassName}}Res struct {
+	CommonPaginationRes
+}
+

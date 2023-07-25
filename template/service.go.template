@@ -1,0 +1,30 @@
+package service
+
+import (
+	"context"
+	"{{.ProjectName}}/internal/model"
+)
+
+type (
+	I{{.ClassName}} interface {
+		Add(ctx context.Context, in model.Add{{.ClassName}}Input) (out *model.Add{{.ClassName}}Output, err error)
+		Update(ctx context.Context, in model.Update{{.ClassName}}Input) (err error)
+		Delete(ctx context.Context, id int) (err error)
+		Page(ctx context.Context, in model.Page{{.ClassName}}Input) (out *model.Page{{.ClassName}}Output, err error)
+	}
+)
+
+var (
+	local{{.ClassName}} I{{.ClassName}}
+)
+
+func {{.ClassName}}() I{{.ClassName}} {
+	if local{{.ClassName}} == nil {
+		panic("implement not found for interface I{{.ClassName}}, forgot register?")
+	}
+	return local{{.ClassName}}
+}
+
+func Register{{.ClassName}}(i I{{.ClassName}}) {
+	local{{.ClassName}} = i
+}

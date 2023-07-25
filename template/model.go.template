@@ -1,0 +1,70 @@
+package model
+
+// {{.ClassName}}Base {{.ClassName}}基类
+type {{.ClassName}}Base struct {
+}
+
+// {{.ClassName}}Info {{.ClassName}}全部内容
+type {{.ClassName}}Info struct {
+    {{.ClassName}}Base
+    Id int
+}
+
+// Add{{.ClassName}}Input 创建{{.TableComment}}请求内容
+type Add{{.ClassName}}Input struct {
+	{{.ClassName}}Base
+}
+
+// Add{{.ClassName}}Output 创建{{.TableComment}}返回响应
+type Add{{.ClassName}}Output struct {
+	Id int `json:"id"`
+}
+
+// Delete{{.ClassName}}Input 删除{{.TableComment}}请求内容
+type Delete{{.ClassName}}Input struct {
+	Id int
+}
+
+// Delete{{.ClassName}}OutPut 删除{{.TableComment}}响应
+type Delete{{.ClassName}}OutPut struct {
+	Success bool
+}
+
+// Update{{.ClassName}}Input 修改{{.TableComment}}请求内容
+type Update{{.ClassName}}Input struct {
+	{{.ClassName}}Base
+	Id int
+}
+
+// Update{{.ClassName}}OutPut 修改{{.TableComment}}响应
+type Update{{.ClassName}}OutPut struct {
+	Success bool
+}
+
+// Page{{.ClassName}}Input 分页获取{{.TableComment}}列表请求内容
+type Page{{.ClassName}}Input struct {
+	Page int // 分页号码
+	Size int // 分页数量，最大50
+	Sort int // 排序类型
+	{{.ClassName}}Base
+}
+
+// Page{{.ClassName}}Output 分页获取{{.TableComment}}列表请求响应
+type Page{{.ClassName}}Output struct {
+	List  []{{.ClassName}}Info    `json:"list"`  // 列表
+	Page  int                     `json:"page"`  // 分页码
+	Size  int                     `json:"size"`  // 分页数量
+	Total int                     `json:"total"` // 数据总数
+}
+
+// Detail{{.ClassName}}Input 根据ID查询{{.TableComment}} 详情请求内容
+type Detail{{.ClassName}}Input struct {
+	Id int
+}
+
+// Detail{{.ClassName}}Output 查询{{.TableComment}} 详情响应
+type Detail{{.ClassName}}Output struct {
+	{{.ClassName}}Info
+}
+
+

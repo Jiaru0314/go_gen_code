@@ -1,0 +1,61 @@
+package {{.ClassName}}
+
+import (
+	"context"
+	"{{.ProjectName}}/internal/dao"
+	"{{.ProjectName}}/internal/model"
+	"{{.ProjectName}}/internal/service"
+)
+
+type s{{.ClassName}} struct{}
+
+func init() {
+	service.Register{{.ClassName}}(&s{{.ClassName}}{})
+}
+
+func (*s{{.ClassName}}) Add(ctx context.Context, in model.Add{{.ClassName}}Input) (out *model.Add{{.ClassName}}Output, err error) {
+	id, err := dao.{{.ClassName}}.Ctx(ctx).Data(in.{{.ClassName}}Base).InsertAndGetId()
+	if err != nil {
+		return nil, err
+	}
+	return &model.Add{{.ClassName}}Output{Id: int(id)}, err
+}
+
+func (*s{{.ClassName}}) Update(ctx context.Context, in model.Update{{.ClassName}}Input) (err error) {
+	if _, err = dao.{{.ClassName}}.Ctx(ctx).Data(in).FieldsEx(in.Id).Where(dao.{{.ClassName}}.Columns().Id, in.Id).Update(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (*s{{.ClassName}}) Delete(ctx context.Context, id int) (err error) {
+	_, err = dao.{{.ClassName}}.Ctx(ctx).Where(dao.{{.ClassName}}.Columns().Id, id).Delete()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (*s{{.ClassName}}) Page(ctx context.Context, in model.Page{{.ClassName}}Input) (out *model.Page{{.ClassName}}Output, err error) {
+	//1.获得*gdb.Model对象，方面后续调用
+	m := dao.{{.ClassName}}.Ctx(ctx)
+	//2. 实例化响应结构体
+	out = &model.Page{{.ClassName}}Output{}
+	out.Page, out.Size = in.Page, in.Size
+	//3. 分页查询
+	listModel := m.Page(in.Page, in.Size)
+	//4. 再查询count，判断有无数据
+	out.Total, err = m.Count()
+	if err != nil || out.Total == 0 {
+		return out, err
+	}
+	//5. 延迟初始化list切片 确定有数据，再按期望大小初始化切片容量
+	out.List = make([]model.{{.ClassName}}Info, 0, in.Size)
+	//6. 把查询到的结果赋值到响应结构体中
+	var list []model.{{.ClassName}}Info
+	if err := listModel.Scan(&list); err != nil {
+		return out, err
+	}
+	out.List = list
+	return
+}

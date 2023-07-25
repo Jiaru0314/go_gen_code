@@ -1,0 +1,11 @@
+
+# CLI tool, only in development environment.
+# https://goframe.org/pages/viewpage.action?pageId=3673173
+gfcli:
+  gen:
+    dao:
+      - link: "mysql:root:123456@tcp(127.0.0.1:3306)/go_gencode"
+        tables: "sys_opera_log,document"
+        descriptionTag: true
+        noModelComment: true
+        removePrefix: "sys_"

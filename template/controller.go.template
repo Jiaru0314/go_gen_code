@@ -1,0 +1,72 @@
+package controller
+
+import (
+	"context"
+	"github.com/gogf/gf/v2/util/gconv"
+	"{{.ProjectName}}/api"
+	"{{.ProjectName}}/internal/model"
+	"{{.ProjectName}}/internal/service"
+)
+
+var {{.ClassName}} = c{{.ClassName}}{}
+
+type c{{.ClassName}} struct{}
+
+func (*c{{.ClassName}}) Add(ctx context.Context, req *api.Add{{.ClassName}}Req) (res *api.Add{{.ClassName}}Res, err error) {
+	input := model.Add{{.ClassName}}Input{}
+	if err = gconv.Struct(req, &input); err != nil {
+		return nil, err
+	}
+
+	out, err := service.{{.ClassName}}().Add(ctx, input)
+	if err != nil {
+		return nil, err
+	}
+
+	return &api.Add{{.ClassName}}Res{Id: out.Id}, nil
+}
+
+func (*c{{.ClassName}}) Delete(ctx context.Context, req *api.Delete{{.ClassName}}Req) (res *api.Delete{{.ClassName}}Res, err error) {
+	if err = service.{{.ClassName}}().Delete(ctx, req.Id); err != nil {
+		return nil, err
+	}
+
+	return &api.Delete{{.ClassName}}Res{
+    		Success: true,
+    	}, nil
+}
+
+func (*c{{.ClassName}}) Update(ctx context.Context, req *api.Update{{.ClassName}}Req) (res *api.Update{{.ClassName}}Res, err error) {
+	input := model.Update{{.ClassName}}Input{}
+	if err = gconv.Struct(req, &input); err != nil {
+		return nil, err
+	}
+
+	if err = service.{{.ClassName}}().Update(ctx, input); err != nil {
+
+		return nil, err
+	}
+
+	return &api.Update{{.ClassName}}Res{
+    		Success: true,
+    	}, nil
+}
+
+func (*c{{.ClassName}}) Page(ctx context.Context, req *api.Page{{.ClassName}}Req) (res *api.Page{{.ClassName}}Res, err error) {
+	input := model.Page{{.ClassName}}Input{}
+	if err = gconv.Struct(req, &input); err != nil {
+		return nil, err
+	}
+
+	out, err := service.{{.ClassName}}().Page(ctx, input)
+	if err != nil {
+		return nil, err
+	}
+
+	err = gconv.Struct(out, &res)
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
