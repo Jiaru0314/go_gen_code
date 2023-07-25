@@ -4,7 +4,7 @@
   @desc: 代码生成工具类
 **/
 
-package main
+package gencode
 
 import (
 	"bytes"
