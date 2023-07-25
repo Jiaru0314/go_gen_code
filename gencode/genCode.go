@@ -105,7 +105,7 @@ func GenALl() {
 
 func GenBizCode(tab Table) {
 	tab.ProjectName = getProjectName()
-	basePath := "template/"
+	basePath := "./template/"
 	t1, _ := template.ParseFiles(basePath + "api.go.template")
 	t2, _ := template.ParseFiles(basePath + "model.go.template")
 	t3, _ := template.ParseFiles(basePath + "controller.go.template")
