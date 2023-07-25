@@ -8,9 +8,9 @@ package gendao
 
 import (
 	"context"
-	"go_gen_code/gendao/consts"
-	"go_gen_code/gendao/utils"
-	"go_gen_code/internal/utils/color"
+	"github.com/Jiaru0314/go_gen_code/gendao/consts"
+	"github.com/Jiaru0314/go_gen_code/gendao/utils"
+	"github.com/Jiaru0314/go_gen_code/internal/utils/color"
 	"log"
 	"strings"
 

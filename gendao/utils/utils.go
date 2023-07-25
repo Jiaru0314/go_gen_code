@@ -9,7 +9,7 @@ package utils
 import (
 	"context"
 	"fmt"
-	"go_gen_code/gendao/consts"
+	"github.com/Jiaru0314/go_gen_code/gendao/consts"
 	"golang.org/x/tools/imports"
 	"log"
 

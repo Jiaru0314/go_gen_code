@@ -9,8 +9,8 @@ package gendao
 import (
 	"context"
 	"fmt"
-	"go_gen_code/gendao/utils"
-	"go_gen_code/internal/utils/color"
+	"github.com/Jiaru0314/go_gen_code/gendao/utils"
+	"github.com/Jiaru0314/go_gen_code/internal/utils/color"
 	"golang.org/x/mod/modfile"
 	"log"
 	"strings"

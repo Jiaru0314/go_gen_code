@@ -8,7 +8,7 @@ package gendao
 
 import (
 	"context"
-	"go_gen_code/gendao/utils"
+	"github.com/Jiaru0314/go_gen_code/gendao/utils"
 	"log"
 
 	"github.com/gogf/gf/v2/os/gfile"
