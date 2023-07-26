@@ -4,7 +4,7 @@
 gfcli:
   gen:
     dao:
-      - link: "mysql:root:123456@tcp(127.0.0.1:3306)/go_gencode"
+      - link: "mysql:root:123456@tcp(127.0.0.1:3306)/your_database"
         tables: "sys_opera_log,document"
         descriptionTag: true
         noModelComment: true

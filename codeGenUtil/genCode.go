@@ -4,7 +4,7 @@
   @desc: 代码生成工具类
 **/
 
-package gencode
+package codeGenUtil
 
 import (
 	"bytes"
@@ -81,6 +81,10 @@ func GenALl() {
 	tabs := make([]Table, 0)
 	for i := range fieldMap {
 		tbName := fieldMap[i]["Name"].String()
+		if !strings.Contains(in.Tables, tbName) {
+			continue
+		}
+
 		newTbName := gstr.CaseCamel(tbName)
 		tab := Table{
 			ClassName:    newTbName,
@@ -91,9 +95,9 @@ func GenALl() {
 	}
 
 	//生成业务代码
-	for i := range tabs {
-		GenBizCode(tabs[i])
-	}
+	//for i := range tabs {
+	//	genBizCode(tabs[i])
+	//}
 
 	for i := range tabs {
 		tbNames = append(tbNames, tabs[i].TableName)
@@ -103,7 +107,7 @@ func GenALl() {
 
 }
 
-func GenBizCode(tab Table) {
+func genBizCode(tab Table) {
 	tab.ProjectName = getProjectName()
 	basePath := "./template/"
 	t1, _ := template.ParseFiles(basePath + "api.go.template")
@@ -119,14 +123,14 @@ func GenBizCode(tab Table) {
 	t4.Execute(&b4, tab)
 	t5.Execute(&b5, tab)
 
-	FileCreate(b1, "./api/"+tab.TableName+".go")
-	FileCreate(b2, "./internal/model/"+tab.TableName+".go")
-	FileCreate(b3, "./internal/controller/"+tab.TableName+".go")
-	FileCreate(b4, "./internal/logic/"+tab.TableName+"/"+tab.TableName+".go")
-	FileCreate(b5, "./internal/service/"+tab.TableName+".go")
+	fileCreate(b1, "./api/"+tab.TableName+".go")
+	fileCreate(b2, "./internal/model/"+tab.TableName+".go")
+	fileCreate(b3, "./internal/controller/"+tab.TableName+".go")
+	fileCreate(b4, "./internal/logic/"+tab.TableName+"/"+tab.TableName+".go")
+	fileCreate(b5, "./internal/service/"+tab.TableName+".go")
 }
 
-func FileCreate(content bytes.Buffer, name string) {
+func fileCreate(content bytes.Buffer, name string) {
 
 	dir := getDir(name)
 	_, err := os.Stat(dir)
