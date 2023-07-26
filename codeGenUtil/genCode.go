@@ -95,9 +95,9 @@ func GenALl() {
 	}
 
 	//生成业务代码
-	//for i := range tabs {
-	//	genBizCode(tabs[i])
-	//}
+	for i := range tabs {
+		genBizCode(tabs[i])
+	}
 
 	for i := range tabs {
 		tbNames = append(tbNames, tabs[i].TableName)
