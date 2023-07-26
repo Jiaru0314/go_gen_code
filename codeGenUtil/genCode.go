@@ -30,6 +30,7 @@ type Table struct {
 	ClassName    string
 	TableName    string
 	TableComment string
+	Imports      []string
 }
 
 func getProjectName() string {
@@ -105,6 +106,8 @@ func GenALl() {
 
 	log.Printf(color.Cyan("%s 业务代码生成完毕"), tbNames)
 
+	//生成logic/logic.go
+	genLogicImport(tbNames)
 }
 
 func genBizCode(tab Table) {
@@ -128,6 +131,26 @@ func genBizCode(tab Table) {
 	fileCreate(b3, "./internal/controller/"+tab.TableName+".go")
 	fileCreate(b4, "./internal/logic/"+tab.TableName+"/"+tab.TableName+".go")
 	fileCreate(b5, "./internal/service/"+tab.TableName+".go")
+}
+
+func genLogicImport(tbNames []string) {
+	var pName = getProjectName()
+
+	var imports []string
+
+	for i := range tbNames {
+		im := "\"" + pName + "/internal/logic/" + tbNames[i] + "\""
+		imports = append(imports, im)
+	}
+
+	tab := Table{Imports: imports}
+
+	basePath := "./template/"
+	t1, _ := template.ParseFiles(basePath + "logic_all.go.template")
+	var b1 bytes.Buffer
+	t1.Execute(&b1, tab)
+	fileCreate(b1, "./internal/logic/logic.go")
+	log.Printf(color.Cyan("logic.go 生成完毕 引入包汇总: %s"), tbNames)
 }
 
 func fileCreate(content bytes.Buffer, name string) {

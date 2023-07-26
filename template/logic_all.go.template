@@ -1,0 +1,7 @@
+package logic
+
+import (
+	{{range $index, $value := .Imports}}
+       _ {{$value}}
+    {{end}}
+)
