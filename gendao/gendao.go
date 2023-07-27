@@ -9,11 +9,13 @@ package gendao
 import (
 	"context"
 	"fmt"
-	"github.com/Jiaru0314/go_gen_code/gendao/utils"
-	"github.com/Jiaru0314/go_gen_code/internal/utils/color"
-	"golang.org/x/mod/modfile"
 	"log"
 	"strings"
+
+	"golang.org/x/mod/modfile"
+
+	"github.com/Jiaru0314/go_gen_code/gendao/utils"
+	"github.com/Jiaru0314/go_gen_code/internal/utils/color"
 
 	"github.com/gogf/gf/v2/container/garray"
 	"github.com/gogf/gf/v2/database/gdb"
@@ -223,7 +225,7 @@ func Dao(ctx context.Context, in CGenDaoInput, db gdb.DB) (err error) {
 		doGenDaoForArray(ctx, -1, in, db)
 	}
 
-	fmt.Printf(color.Cyan("[%s] Dao 层代码生成完毕\n"), in.Tables)
+	log.Printf(color.Cyan("[%s] Dao 层代码生成完毕\n"), in.Tables)
 	return
 }
 
