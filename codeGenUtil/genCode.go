@@ -10,19 +10,21 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"github.com/Jiaru0314/go_gen_code/gendao"
-	"github.com/Jiaru0314/go_gen_code/internal/consts"
-	"github.com/Jiaru0314/go_gen_code/internal/utils/color"
-	"github.com/gogf/gf/v2/database/gdb"
-	"github.com/gogf/gf/v2/frame/g"
-	"github.com/gogf/gf/v2/os/gcfg"
-	"github.com/gogf/gf/v2/os/gtime"
-	"github.com/gogf/gf/v2/text/gstr"
 	"log"
 	"os"
 	"path/filepath"
 	"strings"
 	"text/template"
+
+	"github.com/gogf/gf/v2/database/gdb"
+	"github.com/gogf/gf/v2/frame/g"
+	"github.com/gogf/gf/v2/os/gcfg"
+	"github.com/gogf/gf/v2/os/gtime"
+	"github.com/gogf/gf/v2/text/gstr"
+
+	"github.com/Jiaru0314/go_gen_code/gendao"
+	"github.com/Jiaru0314/go_gen_code/internal/consts"
+	"github.com/Jiaru0314/go_gen_code/internal/utils/color"
 )
 
 type Table struct {
@@ -95,7 +97,7 @@ func GenALl() {
 		tabs = append(tabs, tab)
 	}
 
-	//生成业务代码
+	// 生成业务代码
 	for i := range tabs {
 		genBizCode(tabs[i])
 	}
@@ -106,7 +108,7 @@ func GenALl() {
 
 	log.Printf(color.Cyan("%s 业务代码生成完毕"), tbNames)
 
-	//生成logic/logic.go
+	// 生成logic/logic.go
 	genLogicImport(tbNames)
 }
 
@@ -143,7 +145,7 @@ func genLogicImport(tbNames []string) {
 		imports = append(imports, im)
 	}
 
-	tab := Table{Imports: imports}
+	tab := Table{Imports: imports, ProjectName: getProjectName()}
 
 	basePath := "./template/"
 	t1, _ := template.ParseFiles(basePath + "logic_all.go.template")
