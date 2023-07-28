@@ -90,9 +90,6 @@ func GenALl() {
 	tabs := make([]Table, 0)
 	for i := range fieldMap {
 		tbName := fieldMap[i]["Name"].String()
-		tbNames = append(tbNames, tabs[i].TableName)
-		classNames = append(classNames, tabs[i].ClassName)
-
 		if !strings.Contains(in.Tables, tbName) {
 			continue
 		}
@@ -104,6 +101,8 @@ func GenALl() {
 			TableComment: fieldMap[i]["Comment"].String(),
 		}
 		tabs = append(tabs, tab)
+		tbNames = append(tbNames, tabs[i].TableName)
+		classNames = append(classNames, tabs[i].ClassName)
 	}
 
 	// 生成业务代码

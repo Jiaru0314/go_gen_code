@@ -2,6 +2,7 @@ package router
 
 import (
 	"github.com/gogf/gf/v2/net/ghttp"
+
 	"{{.ProjectName}}/internal/controller"
 )
 
@@ -10,7 +11,7 @@ func RegisterAuthBizRouter(group *ghttp.RouterGroup) {
 	// group.Middleware(service.Middleware().Auth) 鉴权中间件
 	group.Bind(
 		{{range $index, $value := .ClassNames}}
-               controller.{{$value}}
+               controller.{{$value}},
             {{end}}
 	)
 }

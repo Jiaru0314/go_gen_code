@@ -5,7 +5,7 @@ gfcli:
   gen:
     dao:
       - link: "mysql:root:123456@tcp(127.0.0.1:3306)/your_database"
-        tables: "sys_opera_log,document"
+        tables: "your_table1,your_table2"
         descriptionTag: true
         noModelComment: true
         removePrefix: "sys_"
