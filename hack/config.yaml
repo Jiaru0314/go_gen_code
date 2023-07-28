@@ -8,4 +8,4 @@ gfcli:
         tables: "your_table1,your_table2"
         descriptionTag: true
         noModelComment: true
-        removePrefix: "sys_"
+        #removePrefix: "sys_"

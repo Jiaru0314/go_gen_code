@@ -103,8 +103,8 @@ func GenALl() {
 			TableComment: fieldMap[i]["Comment"].String(),
 		}
 		tabs = append(tabs, tab)
-		tbNames = append(tbNames, tabs[i].TableName)
-		classNames = append(classNames, tabs[i].ClassName)
+		tbNames = append(tbNames, tab.TableName)
+		classNames = append(classNames, tab.ClassName)
 	}
 
 	// 生成业务代码
