@@ -28,11 +28,12 @@ import (
 )
 
 type Table struct {
-	ProjectName  string
-	ClassName    string
-	TableName    string
-	TableComment string
-	Imports      []string
+	ProjectName    string
+	ClassName      string
+	TableName      string
+	TableComment   string
+	Imports        []string
+	BaseDefinition string
 }
 
 type BizRouter struct {
@@ -107,7 +108,10 @@ func GenALl() {
 
 	// 生成业务代码
 	for i := range tabs {
-		genBizCode(tabs[i])
+		tb := tabs[i]
+		definition := genBaseDefinition(db, tb.TableName)
+		tb.BaseDefinition = definition
+		genBizCode(tb)
 	}
 
 	log.Printf(color.Cyan("%s 业务代码生成完毕"), tbNames)
@@ -217,4 +221,17 @@ func getDB(in gendao.CGenDaoInput) (res gdb.DB) {
 	}
 
 	return db
+}
+
+func genBaseDefinition(db gdb.DB, tableName string) string {
+	fields, _ := db.TableFields(context.Background(), tableName)
+
+	in := gendao.GenerateStructDefinitionInput{
+		TableName:  tableName,
+		StructName: gstr.CaseCamel(tableName),
+		FieldMap:   fields,
+		IsDo:       false,
+	}
+	in.DB = db
+	return gendao.GenerateBaseDefinition(context.Background(), in)
 }

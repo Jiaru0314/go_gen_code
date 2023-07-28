@@ -10,8 +10,9 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"github.com/olekukonko/tablewriter"
 	"strings"
+
+	"github.com/olekukonko/tablewriter"
 
 	"github.com/gogf/gf/v2/database/gdb"
 	"github.com/gogf/gf/v2/frame/g"
@@ -19,7 +20,7 @@ import (
 	"github.com/gogf/gf/v2/text/gstr"
 )
 
-type generateStructDefinitionInput struct {
+type GenerateStructDefinitionInput struct {
 	CGenDaoInternalInput
 	TableName  string                     // Table name.
 	StructName string                     // Struct name.
@@ -27,7 +28,7 @@ type generateStructDefinitionInput struct {
 	IsDo       bool                       // Is generating DTO struct.
 }
 
-func generateStructDefinition(ctx context.Context, in generateStructDefinitionInput) (string, []string) {
+func GenerateStructDefinition(ctx context.Context, in GenerateStructDefinitionInput) (string, []string) {
 	var appendImports []string
 	buffer := bytes.NewBuffer(nil)
 	array := make([][]string, len(in.FieldMap))
@@ -64,7 +65,7 @@ func generateStructDefinition(ctx context.Context, in generateStructDefinitionIn
 
 // generateStructFieldDefinition generates and returns the attribute definition for specified field.
 func generateStructFieldDefinition(
-	ctx context.Context, field *gdb.TableField, in generateStructDefinitionInput,
+	ctx context.Context, field *gdb.TableField, in GenerateStructDefinitionInput,
 ) (attrLines []string, appendImport string) {
 	var (
 		err      error
@@ -182,4 +183,32 @@ func getJsonTagFromCase(str, caseStr string) string {
 		return gstr.CaseSnakeScreaming(str)
 	}
 	return str
+}
+
+func GenerateBaseDefinition(ctx context.Context, in GenerateStructDefinitionInput) string {
+	buffer := bytes.NewBuffer(nil)
+	array := make([][]string, len(in.FieldMap))
+	names := sortFieldKeyForDao(in.FieldMap)
+	for index, name := range names {
+		if name == "id" || strings.Contains(name, "_at") || strings.Contains(name, "_by") {
+			continue
+		}
+		field := in.FieldMap[name]
+		array[index], _ = generateStructFieldDefinition(ctx, field, in)
+	}
+	tw := tablewriter.NewWriter(buffer)
+	tw.SetBorder(false)
+	tw.SetRowLine(false)
+	tw.SetAutoWrapText(false)
+	tw.SetColumnSeparator("")
+	tw.AppendBulk(array)
+	tw.Render()
+	stContent := buffer.String()
+	// Let's do this hack of table writer for indent!
+	stContent = gstr.Replace(stContent, "  #", "")
+	stContent = gstr.Replace(stContent, "` ", "`")
+	stContent = gstr.Replace(stContent, "``", "")
+	buffer.Reset()
+	buffer.WriteString(stContent)
+	return buffer.String()
 }

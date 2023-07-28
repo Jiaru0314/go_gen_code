@@ -9,11 +9,12 @@ package gendao
 import (
 	"context"
 	"fmt"
+	"log"
+	"strings"
+
 	"github.com/Jiaru0314/go_gen_code/gendao/consts"
 	"github.com/Jiaru0314/go_gen_code/gendao/utils"
 	"github.com/Jiaru0314/go_gen_code/internal/utils/color"
-	"log"
-	"strings"
 
 	"github.com/gogf/gf/v2/frame/g"
 	"github.com/gogf/gf/v2/os/gfile"
@@ -38,7 +39,7 @@ func generateDo(ctx context.Context, in CGenDaoInternalInput) {
 		var (
 			newTableName        = in.NewTableNames[i]
 			doFilePath          = gfile.Join(dirPathDo, gstr.CaseSnake(newTableName)+".go")
-			structDefinition, _ = generateStructDefinition(ctx, generateStructDefinitionInput{
+			structDefinition, _ = GenerateStructDefinition(ctx, GenerateStructDefinitionInput{
 				CGenDaoInternalInput: in,
 				TableName:            tableName,
 				StructName:           gstr.CaseCamel(newTableName),

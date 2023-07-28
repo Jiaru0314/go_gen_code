@@ -3,6 +3,7 @@ package api
 import "github.com/gogf/gf/v2/frame/g"
 
 type {{.ClassName}}Base struct {
+{{.BaseDefinition}}
 }
 
 // Add{{.ClassName}}Req 新增

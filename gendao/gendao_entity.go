@@ -8,11 +8,12 @@ package gendao
 
 import (
 	"context"
+	"log"
+	"strings"
+
 	"github.com/Jiaru0314/go_gen_code/gendao/consts"
 	"github.com/Jiaru0314/go_gen_code/gendao/utils"
 	"github.com/Jiaru0314/go_gen_code/internal/utils/color"
-	"log"
-	"strings"
 
 	"github.com/gogf/gf/v2/frame/g"
 	"github.com/gogf/gf/v2/os/gfile"
@@ -34,7 +35,7 @@ func generateEntity(ctx context.Context, in CGenDaoInternalInput) {
 		var (
 			newTableName                    = in.NewTableNames[i]
 			entityFilePath                  = gfile.Join(dirPathEntity, gstr.CaseSnake(newTableName)+".go")
-			structDefinition, appendImports = generateStructDefinition(ctx, generateStructDefinitionInput{
+			structDefinition, appendImports = GenerateStructDefinition(ctx, GenerateStructDefinitionInput{
 				CGenDaoInternalInput: in,
 				TableName:            tableName,
 				StructName:           gstr.CaseCamel(newTableName),

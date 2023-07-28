@@ -2,6 +2,7 @@ package model
 
 // {{.ClassName}}Base {{.ClassName}}基类
 type {{.ClassName}}Base struct {
+{{.BaseDefinition}}
 }
 
 // {{.ClassName}}Info {{.ClassName}}全部内容
