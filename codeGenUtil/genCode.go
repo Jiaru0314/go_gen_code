@@ -23,6 +23,7 @@ import (
 	"github.com/gogf/gf/v2/text/gstr"
 
 	"github.com/Jiaru0314/go_gen_code/gendao"
+	"github.com/Jiaru0314/go_gen_code/gendao/utils"
 	"github.com/Jiaru0314/go_gen_code/internal/consts"
 	"github.com/Jiaru0314/go_gen_code/internal/utils/color"
 )
@@ -199,6 +200,8 @@ func fileCreate(content bytes.Buffer, name string) {
 		log.Println(err)
 	}
 	file.Close()
+
+	utils.GoFmt(name)
 	log.Printf(color.Green("generated: %s"), name)
 }
 
