@@ -1,5 +1,9 @@
 package model
 
+import (
+	"github.com/gogf/gf/v2/os/gtime"
+)
+
 // {{.ClassName}}Base {{.ClassName}}基类
 type {{.ClassName}}Base struct {
 {{.BaseDefinition}}
