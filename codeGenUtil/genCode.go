@@ -35,6 +35,11 @@ type Table struct {
 	Imports      []string
 }
 
+type BizRouter struct {
+	ProjectName string
+	ClassNames  []string
+}
+
 func getProjectName() string {
 	currentDir, _ := os.Getwd()
 	split := strings.Split(currentDir, "\\")
@@ -48,11 +53,12 @@ func getDir(filePath string) string {
 
 func GenALl() {
 	var (
-		err     error
-		ctx     context.Context
-		in      gendao.CGenDaoInput
-		db      gdb.DB
-		tbNames []string
+		err        error
+		ctx        context.Context
+		in         gendao.CGenDaoInput
+		db         gdb.DB
+		tbNames    []string
+		classNames []string
 	)
 
 	ctx = context.Background()
@@ -84,6 +90,9 @@ func GenALl() {
 	tabs := make([]Table, 0)
 	for i := range fieldMap {
 		tbName := fieldMap[i]["Name"].String()
+		tbNames = append(tbNames, tabs[i].TableName)
+		classNames = append(classNames, tabs[i].ClassName)
+
 		if !strings.Contains(in.Tables, tbName) {
 			continue
 		}
@@ -102,14 +111,13 @@ func GenALl() {
 		genBizCode(tabs[i])
 	}
 
-	for i := range tabs {
-		tbNames = append(tbNames, tabs[i].TableName)
-	}
-
 	log.Printf(color.Cyan("%s 业务代码生成完毕"), tbNames)
 
 	// 生成logic/logic.go
 	genLogicImport(tbNames)
+
+	// 生成业务路由注册 router/bizRouter.go
+	genBizRouter(classNames)
 }
 
 func genBizCode(tab Table) {
@@ -153,6 +161,17 @@ func genLogicImport(tbNames []string) {
 	t1.Execute(&b1, tab)
 	fileCreate(b1, "./internal/logic/logic.go")
 	log.Printf(color.Cyan("logic.go 生成完毕 引入包汇总: %s"), tbNames)
+}
+
+func genBizRouter(classNames []string) {
+	tab := BizRouter{ClassNames: classNames, ProjectName: getProjectName()}
+
+	basePath := "./template/"
+	t1, _ := template.ParseFiles(basePath + "bizRouter.go.template")
+	var b1 bytes.Buffer
+	t1.Execute(&b1, tab)
+	fileCreate(b1, "./internal/router/bizRouter.go")
+	log.Printf(color.Cyan("bizRouter.go 生成完毕 引入包汇总: %s"), classNames)
 }
 
 func fileCreate(content bytes.Buffer, name string) {
