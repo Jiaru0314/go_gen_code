@@ -88,10 +88,10 @@ func GenALl() {
 		return
 	}
 
-	fieldMap, err := db.Query(ctx, consts.ShowTableStatus)
+	fieldMap, err := db.Query(ctx, consts.SQL_SERVER_ShowTableStatus)
 	tabs := make([]Table, 0)
 	for i := range fieldMap {
-		tbName := fieldMap[i]["Name"].String()
+		tbName := strings.ReplaceAll(fieldMap[i]["Name"].String(), "t_", "")
 		if !strings.Contains(in.Tables, tbName) {
 			continue
 		}
