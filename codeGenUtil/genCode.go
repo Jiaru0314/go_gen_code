@@ -29,12 +29,13 @@ import (
 )
 
 type Table struct {
-	ProjectName    string
-	ClassName      string
-	TableName      string
-	TableComment   string
-	Imports        []string
-	BaseDefinition string
+	ProjectName       string
+	ClassName         string
+	TableName         string
+	TableComment      string
+	Imports           []string
+	BaseDefinition    string
+	OriginalTableName string
 }
 
 type BizRouter struct {
@@ -91,16 +92,18 @@ func GenALl() {
 	fieldMap, err := db.Query(ctx, consts.SQL_SERVER_ShowTableStatus)
 	tabs := make([]Table, 0)
 	for i := range fieldMap {
-		tbName := strings.ReplaceAll(fieldMap[i]["Name"].String(), "t_", "")
+		oriTbName := fieldMap[i]["Name"].String()
+		tbName := strings.ReplaceAll(oriTbName, "t_", "")
 		if !strings.Contains(in.Tables, tbName) {
 			continue
 		}
 
 		newTbName := gstr.CaseCamel(tbName)
 		tab := Table{
-			ClassName:    newTbName,
-			TableName:    tbName,
-			TableComment: fieldMap[i]["Comment"].String(),
+			ClassName:         newTbName,
+			TableName:         tbName,
+			TableComment:      fieldMap[i]["Comment"].String(),
+			OriginalTableName: oriTbName,
 		}
 		tabs = append(tabs, tab)
 		tbNames = append(tbNames, tab.TableName)
@@ -110,7 +113,7 @@ func GenALl() {
 	// 生成业务代码
 	for i := range tabs {
 		tb := tabs[i]
-		definition := genBaseDefinition(db, tb.TableName)
+		definition := genBaseDefinition(db, tb.OriginalTableName)
 		tb.BaseDefinition = definition
 		genBizCode(tb)
 	}
