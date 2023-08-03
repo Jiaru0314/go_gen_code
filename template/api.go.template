@@ -11,7 +11,7 @@ type {{.ClassName}}Base struct {
 
 // Add{{.ClassName}}Req 新增
 type Add{{.ClassName}}Req struct {
-	g.Meta `path:"/{{.TableName}}" method:"post" tags:"{{.TableComment}}" summary:"新增"`
+	g.Meta `path:"/{{.Path}}" method:"post" tags:"{{.TableComment}}" summary:"新增"`
 	{{.ClassName}}Base
 }
 
@@ -21,7 +21,7 @@ type Add{{.ClassName}}Res struct {
 
 // Delete{{.ClassName}}Req 删除
 type Delete{{.ClassName}}Req struct {
-	g.Meta `path:"/{{.TableName}}" method:"delete" tags:"{{.TableComment}}" summary:"删除"`
+	g.Meta `path:"/{{.Path}}" method:"delete" tags:"{{.TableComment}}" summary:"删除"`
 	Id     int `json:"id" v:"required#{{.TableComment}}ID不能为空" dc:"id"`
 }
 
@@ -31,7 +31,7 @@ type Delete{{.ClassName}}Res struct{
 
 // Update{{.ClassName}}Req 更新
 type Update{{.ClassName}}Req struct {
-	g.Meta `path:"/{{.TableName}}" method:"put" tags:"{{.TableComment}}" summary:"更新"`
+	g.Meta `path:"/{{.Path}}" method:"put" tags:"{{.TableComment}}" summary:"更新"`
 	Id     int `json:"id" v:"required#{{.TableComment}}ID不能为空" dc:"id"`
 	{{.ClassName}}Base
 }
@@ -42,7 +42,7 @@ type Update{{.ClassName}}Res struct{
 
 // Page{{.ClassName}}Req 获取
 type Page{{.ClassName}}Req struct {
-	g.Meta `path:"/{{.TableName}}/page" method:"get" tags:"{{.TableComment}}" summary:"获取分页"`
+	g.Meta `path:"/{{.Path}}/page" method:"get" tags:"{{.TableComment}}" summary:"获取分页"`
 	CommonPaginationReq
 }
 

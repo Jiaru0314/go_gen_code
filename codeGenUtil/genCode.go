@@ -36,6 +36,7 @@ type Table struct {
 	Imports           []string
 	BaseDefinition    string
 	OriginalTableName string
+	Path              string
 }
 
 type BizRouter struct {
@@ -104,6 +105,7 @@ func GenALl() {
 			TableName:         tbName,
 			TableComment:      fieldMap[i]["Comment"].String(),
 			OriginalTableName: oriTbName,
+			Path:              toLow(newTbName),
 		}
 		tabs = append(tabs, tab)
 		tbNames = append(tbNames, tab.TableName)
@@ -240,4 +242,8 @@ func genBaseDefinition(db gdb.DB, tableName string) string {
 	}
 	in.DB = db
 	return gendao.GenerateBaseDefinition(context.Background(), in)
+}
+
+func toLow(str string) string {
+	return strings.ToLower(str[:1]) + str[1:]
 }
