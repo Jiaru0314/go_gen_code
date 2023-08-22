@@ -9,7 +9,7 @@ type (
 	I{{.ClassName}} interface {
 		Add(ctx context.Context, in model.Add{{.ClassName}}Input) (out *model.Add{{.ClassName}}Output, err error)
 		Update(ctx context.Context, in model.Update{{.ClassName}}Input) (err error)
-		Delete(ctx context.Context, id int) (err error)
+		Delete(ctx context.Context, id string) (err error)
 		Page(ctx context.Context, in model.Page{{.ClassName}}Input) (out *model.Page{{.ClassName}}Output, err error)
 	}
 )

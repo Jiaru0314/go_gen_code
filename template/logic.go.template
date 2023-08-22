@@ -5,6 +5,7 @@ import (
 	"{{.ProjectName}}/internal/dao"
 	"{{.ProjectName}}/internal/model"
 	"{{.ProjectName}}/internal/service"
+	utils2 "{{.ProjectName}}/internal/utils"
 )
 
 type s{{.ClassName}} struct{}
@@ -14,11 +15,13 @@ func init() {
 }
 
 func (*s{{.ClassName}}) Add(ctx context.Context, in model.Add{{.ClassName}}Input) (out *model.Add{{.ClassName}}Output, err error) {
-	id, err := dao.{{.ClassName}}.Ctx(ctx).Data(in.{{.ClassName}}Base).InsertAndGetId()
+	id := utils2.GetSequenceByTableName(dao.{{.ClassName}}.Table())
+	in.Id = id
+	_, err = dao.{{.ClassName}}.Ctx(ctx).Data(in.{{.ClassName}}Base).Insert()
 	if err != nil {
 		return nil, err
 	}
-	return &model.Add{{.ClassName}}Output{Id: int(id)}, err
+	return &model.Add{{.ClassName}}Output{Id: id}, err
 }
 
 func (*s{{.ClassName}}) Update(ctx context.Context, in model.Update{{.ClassName}}Input) (err error) {
@@ -28,7 +31,7 @@ func (*s{{.ClassName}}) Update(ctx context.Context, in model.Update{{.ClassName}
 	return nil
 }
 
-func (*s{{.ClassName}}) Delete(ctx context.Context, id int) (err error) {
+func (*s{{.ClassName}}) Delete(ctx context.Context, id string) (err error) {
 	_, err = dao.{{.ClassName}}.Ctx(ctx).Where(dao.{{.ClassName}}.Columns().Id, id).Delete()
 	if err != nil {
 		return err

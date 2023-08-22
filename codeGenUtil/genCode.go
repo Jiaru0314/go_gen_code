@@ -94,7 +94,7 @@ func GenALl() {
 	tabs := make([]Table, 0)
 	for i := range fieldMap {
 		oriTbName := fieldMap[i]["Name"].String()
-		tbName := strings.ReplaceAll(oriTbName, "t_", "")
+		tbName := strings.Replace(oriTbName, "t_", "", 1)
 		if !strings.Contains(in.Tables, tbName) {
 			continue
 		}

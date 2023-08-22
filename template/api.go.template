@@ -16,13 +16,13 @@ type Add{{.ClassName}}Req struct {
 }
 
 type Add{{.ClassName}}Res struct {
-	Id int `json:"id" dc:"id"`
+	Id string `json:"id" dc:"id"`
 }
 
 // Delete{{.ClassName}}Req 删除
 type Delete{{.ClassName}}Req struct {
 	g.Meta `path:"/{{.Path}}" method:"delete" tags:"{{.TableComment}}" summary:"删除"`
-	Id     int `json:"id" v:"required#{{.TableComment}}ID不能为空" dc:"id"`
+	Id     string `json:"id" v:"required#{{.TableComment}}ID不能为空" dc:"id"`
 }
 
 type Delete{{.ClassName}}Res struct{
@@ -32,7 +32,7 @@ type Delete{{.ClassName}}Res struct{
 // Update{{.ClassName}}Req 更新
 type Update{{.ClassName}}Req struct {
 	g.Meta `path:"/{{.Path}}" method:"put" tags:"{{.TableComment}}" summary:"更新"`
-	Id     int `json:"id" v:"required#{{.TableComment}}ID不能为空" dc:"id"`
+	Id     string `json:"id" v:"required#{{.TableComment}}ID不能为空" dc:"id"`
 	{{.ClassName}}Base
 }
 

@@ -4,8 +4,8 @@
 gfcli:
   gen:
     dao:
-      - link: "mysql:root:123456@tcp(127.0.0.1:3306)/your_database"
-        tables: "your_table1,your_table2"
+      - link: "mssql:sa:Yzj123!!@tcp(172.20.17.91:1433)/YangtzeFlow?encrypt=disable"
+        tables: "t_file,t_flow"
         descriptionTag: true
         noModelComment: true
-        #removePrefix: "sys_"
+        removePrefix: "t_"
