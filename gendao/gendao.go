@@ -296,7 +296,7 @@ func doGenDaoForArray(ctx context.Context, index int, in CGenDaoInput, db gdb.DB
 		NewTableNames: newTableNames,
 	})
 	// Do.
-	generateDo(ctx, CGenDaoInternalInput{
+	GenerateDo(ctx, CGenDaoInternalInput{
 		CGenDaoInput:  in,
 		DB:            db,
 		TableNames:    tableNames,

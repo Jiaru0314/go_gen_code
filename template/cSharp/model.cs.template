@@ -1,0 +1,10 @@
+using SqlSugar;
+
+namespace CMS.Models;
+
+/// <summary>
+/// {{.TableComment}}
+/// </summary>
+[SugarTable("{{.OriginalTableName}}")]
+public class {{.OriginalTableName}}
+{{.BaseDefinition}}

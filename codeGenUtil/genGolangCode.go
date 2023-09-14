@@ -1,7 +1,7 @@
 /**
   @author: 志强
   @since: 2023/7/24
-  @desc: 代码生成工具类
+  @desc: 代码生成工具类-Golang
 **/
 
 package codeGenUtil
@@ -11,61 +11,29 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"os"
-	"path/filepath"
 	"strings"
 	"text/template"
 
 	"github.com/gogf/gf/v2/database/gdb"
 	"github.com/gogf/gf/v2/frame/g"
 	"github.com/gogf/gf/v2/os/gcfg"
-	"github.com/gogf/gf/v2/os/gtime"
 	"github.com/gogf/gf/v2/text/gstr"
 
 	"github.com/Jiaru0314/go_gen_code/gendao"
-	"github.com/Jiaru0314/go_gen_code/gendao/utils"
 	"github.com/Jiaru0314/go_gen_code/internal/consts"
 	"github.com/Jiaru0314/go_gen_code/internal/utils/color"
 )
 
-type Table struct {
-	ProjectName       string
-	ClassName         string
-	TableName         string
-	TableComment      string
-	Imports           []string
-	BaseDefinition    string
-	OriginalTableName string
-	Path              string
-}
-
-type BizRouter struct {
-	ProjectName string
-	ClassNames  []string
-}
-
-func getProjectName() string {
-	currentDir, _ := os.Getwd()
-	split := strings.Split(currentDir, "\\")
-	return split[len(split)-1]
-}
-
-func getDir(filePath string) string {
-	dirPath := filepath.Dir(filePath)
-	return dirPath
-}
-
-func GenALl() {
+func GenGolangCode() {
 	var (
 		err        error
-		ctx        context.Context
+		ctx        = context.Background()
 		in         gendao.CGenDaoInput
 		db         gdb.DB
 		tbNames    []string
 		classNames []string
 	)
 
-	ctx = context.Background()
 	g.Cfg().GetAdapter().(*gcfg.AdapterFile).SetFileName("./hack/config.yaml")
 	in = gendao.CGenDaoInput{
 		Path:       "internal",
@@ -94,7 +62,7 @@ func GenALl() {
 	tabs := make([]Table, 0)
 	for i := range fieldMap {
 		oriTbName := fieldMap[i]["Name"].String()
-		tbName := strings.Replace(oriTbName, "t_", "", 1)
+		tbName := strings.Replace(oriTbName, "T_", "", 1)
 		if !strings.Contains(in.Tables, tbName) {
 			continue
 		}
@@ -115,7 +83,7 @@ func GenALl() {
 	// 生成业务代码
 	for i := range tabs {
 		tb := tabs[i]
-		definition := genBaseDefinition(db, tb.OriginalTableName)
+		definition := genBaseDefinition(db, tb.OriginalTableName, "Golang")
 		tb.BaseDefinition = definition
 		genBizCode(tb)
 	}
@@ -131,7 +99,7 @@ func GenALl() {
 
 func genBizCode(tab Table) {
 	tab.ProjectName = getProjectName()
-	basePath := "./template/"
+	basePath := "./template/golang/"
 	t1, _ := template.ParseFiles(basePath + "api.go.template")
 	t2, _ := template.ParseFiles(basePath + "model.go.template")
 	t3, _ := template.ParseFiles(basePath + "controller.go.template")
@@ -139,11 +107,17 @@ func genBizCode(tab Table) {
 	t5, _ := template.ParseFiles(basePath + "service.go.template")
 
 	var b1, b2, b3, b4, b5 bytes.Buffer
-	t1.Execute(&b1, tab)
-	t2.Execute(&b2, tab)
-	t3.Execute(&b3, tab)
-	t4.Execute(&b4, tab)
-	t5.Execute(&b5, tab)
+	var err error
+	err = t1.Execute(&b1, tab)
+	err = t2.Execute(&b2, tab)
+	err = t3.Execute(&b3, tab)
+	err = t4.Execute(&b4, tab)
+	err = t5.Execute(&b5, tab)
+
+	if err != nil {
+		log.Printf(color.Red("%s 业务代码生成失败"), err)
+		return
+	}
 
 	fileCreate(b1, "./api/"+tab.TableName+".go")
 	fileCreate(b2, "./internal/model/"+tab.TableName+".go")
@@ -164,7 +138,7 @@ func genLogicImport(tbNames []string) {
 
 	tab := Table{Imports: imports, ProjectName: getProjectName()}
 
-	basePath := "./template/"
+	basePath := "./template/golang/"
 	t1, _ := template.ParseFiles(basePath + "logic_all.go.template")
 	var b1 bytes.Buffer
 	t1.Execute(&b1, tab)
@@ -175,75 +149,10 @@ func genLogicImport(tbNames []string) {
 func genBizRouter(classNames []string) {
 	tab := BizRouter{ClassNames: classNames, ProjectName: getProjectName()}
 
-	basePath := "./template/"
+	basePath := "./template/golang/"
 	t1, _ := template.ParseFiles(basePath + "bizRouter.go.template")
 	var b1 bytes.Buffer
 	t1.Execute(&b1, tab)
 	fileCreate(b1, "./internal/router/bizRouter.go")
 	log.Printf(color.Cyan("bizRouter.go 生成完毕 引入包汇总: %s"), classNames)
-}
-
-func fileCreate(content bytes.Buffer, name string) {
-
-	dir := getDir(name)
-	_, err := os.Stat(dir)
-	if err != nil {
-		// 文件夹不存在，创建
-		err = os.MkdirAll(dir, 0755)
-		if err != nil {
-			fmt.Println("创建文件夹失败:", err)
-			return
-		}
-	}
-
-	file, err := os.Create(name)
-	if err != nil {
-		log.Println(err)
-	}
-	_, err = file.WriteString(content.String())
-	if err != nil {
-		log.Println(err)
-	}
-	file.Close()
-
-	utils.GoFmt(name)
-	log.Printf(color.Green("generated: %s"), name)
-}
-
-func getDB(in gendao.CGenDaoInput) (res gdb.DB) {
-	var (
-		db  gdb.DB
-		err error
-	)
-	// It uses user passed database configuration.
-	var tempGroup = gtime.TimestampNanoStr()
-	gdb.AddConfigNode(tempGroup, gdb.ConfigNode{
-		Link: in.Link,
-	})
-	if db, err = gdb.Instance(tempGroup); err != nil {
-		log.Fatalf(`database initialization failed: %+v`, err)
-	}
-
-	if db == nil {
-		log.Fatal(`database initialization failed, may be invalid database configuration`)
-	}
-
-	return db
-}
-
-func genBaseDefinition(db gdb.DB, tableName string) string {
-	fields, _ := db.TableFields(context.Background(), tableName)
-
-	in := gendao.GenerateStructDefinitionInput{
-		TableName:  tableName,
-		StructName: gstr.CaseCamel(tableName),
-		FieldMap:   fields,
-		IsDo:       false,
-	}
-	in.DB = db
-	return gendao.GenerateBaseDefinition(context.Background(), in)
-}
-
-func toLow(str string) string {
-	return strings.ToLower(str[:1]) + str[1:]
 }

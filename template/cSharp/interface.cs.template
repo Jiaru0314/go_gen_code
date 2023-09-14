@@ -1,0 +1,14 @@
+namespace CMS.Interface;
+
+public interface I{{.ClassName}}Processor
+{
+    public R_SysResBase Add{{.ClassName}}({{.OriginalTableName}} group);
+
+    public R_SysResBase Delete{{.ClassName}}(string id);
+
+    public R_SysResBase Update{{.ClassName}}({{.OriginalTableName}} group);
+
+    public R_SysResBase List{{.ClassName}}(Query{{.ClassName}}Req group);
+
+    public R_SysResBase Page{{.ClassName}}(Page{{.ClassName}}Req group);
+}

@@ -10,5 +10,9 @@ import (
 )
 
 func main() {
-	codeGenUtil.GenALl()
+	// Golang版本
+	codeGenUtil.GenGolangCode()
+
+	// CSharp版本
+	codeGenUtil.GenCSharpCode()
 }

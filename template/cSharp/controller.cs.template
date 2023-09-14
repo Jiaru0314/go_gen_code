@@ -1,0 +1,107 @@
+using CMS.Interface;
+
+namespace CMS.API.Controllers;
+
+///<summary>
+/// {{.TableComment}}管理
+///</summary>
+[Authorize]
+[ApiController]
+[Route("[controller]/[action]")]
+public class {{.ClassName}}Controller : ControllerBase
+{
+    private readonly I{{.ClassName}}Processor _processor;
+
+    /// <summary>
+    /// 构造函数
+    /// </summary>
+    /// <param name="processor"></param>
+    public {{.ClassName}}Controller(I{{.ClassName}}Processor processor)
+    {
+        _processor = processor;
+    }
+
+    /// <summary>
+    /// 新增自定义群组
+    /// </summary>
+    /// <param name="req"></param>
+    /// <returns></returns>
+    [HttpPost]
+    public R_SysResBase Add{{.ClassName}}([FromBody] Add{{.ClassName}}Req req)
+    {
+        // 权限验证
+
+        // 业务模型转换
+        var {{.ClassName}} = new {{.OriginalTableName}}
+        {
+            Name = req.Name,
+        };
+        return _processor.Add{{.ClassName}}({{.ClassName}});
+    }
+
+    /// <summary>
+    /// 删除群组
+    /// </summary>
+    /// <param name="groupId"></param>
+    /// <returns></returns>
+    [HttpDelete]
+    public R_SysResBase DeleteAdd{{.ClassName}}([Required] string groupId)
+    {
+        // 权限验证
+        return _processor.Delete{{.ClassName}}(groupId);
+    }
+
+    /// <summary>
+    /// 更新群组
+    /// </summary>
+    /// <param name="req"></param>
+    /// <returns></returns>
+    [HttpPut]
+    public R_SysResBase Update{{.ClassName}}([FromBody] Update{{.ClassName}}Req req)
+    {
+        // 权限验证
+
+        // 业务模型转换
+        var group = new {{.OriginalTableName}}
+        {
+            ID = req.ID,
+            Name = req.Name
+        };
+        return _processor.Update{{.ClassName}}(group);
+    }
+
+    /// <summary>
+    /// 查询列表
+    /// </summary>
+    /// <param name="name"></param>
+    /// <returns></returns>
+    [HttpGet]
+    public R_SysResBase List{{.ClassName}}(string name)
+    {
+        var req = new Query{{.ClassName}}Req
+        {
+            Name = name
+        };
+        return _processor.List{{.ClassName}}(req);
+    }
+
+
+    /// <summary>
+    /// 分页检索
+    /// </summary>
+    /// <param name="name"></param>
+    /// <param name="pageIndex"></param>
+    /// <param name="pageSize"></param>
+    /// <returns></returns>
+    [HttpGet]
+    public R_SysResBase Page{{.ClassName}}(string name, int pageIndex, int pageSize)
+    {
+        var req = new Page{{.ClassName}}Req()
+        {
+            Name = name,
+            pageIndex = pageIndex <= 0 ? 1 : pageIndex,
+            pageSize = pageSize == 0 ? 10 : pageSize
+        };
+        return _processor.Page{{.ClassName}}(req);
+    }
+}

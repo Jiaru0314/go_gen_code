@@ -212,3 +212,53 @@ func GenerateBaseDefinition(ctx context.Context, in GenerateStructDefinitionInpu
 	buffer.WriteString(stContent)
 	return buffer.String()
 }
+
+func GenerateBaseDefinitionForCSharp(ctx context.Context, in GenerateStructDefinitionInput) string {
+	buffer := bytes.NewBuffer(nil)
+	array := make([]string, 0)
+	names := sortFieldKeyForDao(in.FieldMap)
+	array = append(array, "{")
+	for _, name := range names {
+		field := in.FieldMap[name]
+		typeDef := getTypeDef(field.Type)
+
+		var definition = "    public " + typeDef + " " + name + " { get; set; }"
+		array = append(array, "")
+		array = append(array, "    /// <summary>")
+		array = append(array, "    /// "+field.Comment)
+		array = append(array, "    /// </summary>")
+		array = append(array, definition)
+	}
+	array = append(array, "}")
+	tw := tablewriter.NewWriter(buffer)
+	tw.SetBorder(false)
+	tw.SetRowLine(false)
+	tw.SetAutoWrapText(false)
+	tw.SetColumnSeparator("\n")
+	tw.Append(array)
+	tw.Render()
+	stContent := buffer.String()
+	// Let's do this hack of table writer for indent!
+	stContent = gstr.Replace(stContent, "  #", "")
+	stContent = gstr.Replace(stContent, "` ", "`")
+	stContent = gstr.Replace(stContent, "``", "")
+	buffer.Reset()
+	buffer.WriteString(stContent)
+	return buffer.String()
+}
+
+func getTypeDef(fieldType string) string {
+	if strings.Contains(fieldType, "varchar") {
+		return "string"
+	}
+
+	if strings.Contains(fieldType, "datetime") {
+		return "DateTime"
+	}
+
+	if strings.Contains(fieldType, "int") {
+		return "int"
+	}
+
+	return "undefined"
+}

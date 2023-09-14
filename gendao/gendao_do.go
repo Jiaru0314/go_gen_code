@@ -22,7 +22,7 @@ import (
 	"github.com/gogf/gf/v2/text/gstr"
 )
 
-func generateDo(ctx context.Context, in CGenDaoInternalInput) {
+func GenerateDo(ctx context.Context, in CGenDaoInternalInput) {
 	var dirPathDo = gfile.Join(in.Path, in.DoPath)
 	if in.Clear {
 		doClear(ctx, dirPathDo, false)
