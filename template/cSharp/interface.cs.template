@@ -1,4 +1,4 @@
-namespace CMS.Interface;
+namespace {{.ProjectName}}.Interface;
 
 public interface I{{.ClassName}}Processor
 {

@@ -1,7 +1,7 @@
 /**
   @author: 志强
   @since: 2023/7/24
-  @desc: 代码生成工具类-Golang
+  @desc: 代码生成工具类-Csharp
 **/
 
 package codeGenUtil
@@ -9,14 +9,11 @@ package codeGenUtil
 import (
 	"bytes"
 	"context"
-	"fmt"
 	"log"
 	"strings"
 	"text/template"
 
 	"github.com/gogf/gf/v2/database/gdb"
-	"github.com/gogf/gf/v2/frame/g"
-	"github.com/gogf/gf/v2/os/gcfg"
 	"github.com/gogf/gf/v2/text/gstr"
 
 	"github.com/Jiaru0314/go_gen_code/gendao"
@@ -34,7 +31,6 @@ func GenGolangCode() {
 		classNames []string
 	)
 
-	g.Cfg().GetAdapter().(*gcfg.AdapterFile).SetFileName("./hack/config.yaml")
 	in = gendao.CGenDaoInput{
 		Path:       "internal",
 		EntityPath: "model/entity",
@@ -42,13 +38,8 @@ func GenGolangCode() {
 		DaoPath:    "dao",
 	}
 
-	err = g.Cfg().MustGet(
-		ctx,
-		fmt.Sprintf(`%s.%d`, gendao.CGenDaoConfig, 0),
-	).Scan(&in)
-	if err != nil {
-		log.Fatalf(`invalid configuration of "%s": %+v`, gendao.CGenDaoConfig, err)
-	}
+	// 加载配置
+	loadConfig(ctx, &in)
 
 	db = getDB(in)
 

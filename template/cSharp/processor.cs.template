@@ -1,4 +1,4 @@
-namespace CMS.Processor;
+namespace {{.ProjectName}}.Processor;
 
 public class {{.ClassName}}Processor : I{{.ClassName}}Processor
 {

@@ -7,7 +7,29 @@
 
 ###  Step2
     修改  `/hack/config.yaml` 文件中数据库连接信息 以及配置需要生成的表 可参考GoFrame官方文档
+    关于如何获取 tables :
+    ```sql
 
+    ---- sqlserver 
+
+    SELECT 
+    STUFF(
+        (SELECT ', ' + TABLE_NAME 
+         FROM INFORMATION_SCHEMA.TABLES 
+         WHERE TABLE_TYPE = 'BASE TABLE' 
+         FOR XML PATH('')), 
+        1, 
+        2, 
+        ''
+    ) AS TableNames;
+
+    ---- mysql 
+
+    SELECT GROUP_CONCAT(table_name SEPARATOR ', ') AS TableNames
+    FROM information_schema.tables
+    WHERE table_schema = 'your_database_name' AND table_type = 'BASE TABLE';
+    ```
+    
 ```yaml
 gfcli:
   gen:
@@ -16,6 +38,18 @@ gfcli:
         tables: "document"
         descriptionTag: true
         noModelComment: true
+```
+
+```yaml
+gfcli:
+  gen:
+    dao:
+      - link: "mssql:root:123456@tcp(127.0.0.1:1433)/your_database?encrypt=disable"
+        tables: "T_SysParameter,T_SysModule,T_SysRole,T_SysRoleModule"
+        descriptionTag: true
+        noModelComment: true
+        removePrefix: "T_"
+        projectName: "EAMS"
 ```
 
 ### Step3

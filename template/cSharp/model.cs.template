@@ -1,6 +1,6 @@
 using SqlSugar;
 
-namespace CMS.Models;
+namespace {{.ProjectName}}.Models;
 
 /// <summary>
 /// {{.TableComment}}

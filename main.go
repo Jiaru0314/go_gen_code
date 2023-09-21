@@ -11,7 +11,7 @@ import (
 
 func main() {
 	// Golang版本
-	codeGenUtil.GenGolangCode()
+	// codeGenUtil.GenGolangCode()
 
 	// CSharp版本
 	codeGenUtil.GenCSharpCode()

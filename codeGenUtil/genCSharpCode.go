@@ -56,6 +56,7 @@ func GenCSharpCode() {
 			TableComment:      fieldMap[i]["Comment"].String(),
 			OriginalTableName: oriTbName,
 			Path:              toLow(newTbName),
+			ProjectName:       in.ProjectName,
 		}
 		tabs = append(tabs, tab)
 		tbNames = append(tbNames, tab.TableName)
@@ -69,11 +70,12 @@ func GenCSharpCode() {
 		genCSharpBizCode(tb)
 	}
 
+	genAddScoped(tbNames)
+
 	log.Printf(color.Cyan("%s 业务代码生成完毕"), tbNames)
 }
 
 func genCSharpBizCode(tab Table) {
-	tab.ProjectName = getProjectName()
 	basePath := "./template/cSharp/"
 	t2, _ := template.ParseFiles(basePath + "model.cs.template")
 	t3, _ := template.ParseFiles(basePath + "controller.cs.template")
@@ -90,4 +92,21 @@ func genCSharpBizCode(tab Table) {
 	fileCreate(b3, "./internal/cSharp/controller/"+tab.TableName+"Controller.cs")
 	fileCreate(b4, "./internal/cSharp/interface/"+"I"+tab.TableName+"Processor.cs")
 	fileCreate(b5, "./internal/cSharp/processor/"+tab.TableName+"Processor.cs")
+}
+
+func genAddScoped(tbNames []string) {
+	var imports []string
+
+	for i := range tbNames {
+		im := "builder.Services.AddScoped<I" + tbNames[i] + "Processor, " + tbNames[i] + "Processor>();"
+		imports = append(imports, im)
+	}
+
+	basePath := "./template/cSharp/"
+	tab := Table{Imports: imports}
+	t1, _ := template.ParseFiles(basePath + "program.cs.template")
+	var b1 bytes.Buffer
+	t1.Execute(&b1, tab)
+	fileCreate(b1, "./internal/cSharp/program.cs")
+	log.Printf(color.Cyan("program.cs 生成完毕 引入interface汇总: %s"), tbNames)
 }

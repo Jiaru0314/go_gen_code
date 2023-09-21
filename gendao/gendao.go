@@ -199,6 +199,7 @@ type (
 		NoModelComment     bool                   `name:"noModelComment"      short:"m"  brief:"{CGenDaoBriefNoModelComment}" orphan:"true"`
 		Clear              bool                   `name:"clear"               short:"a"  brief:"{CGenDaoBriefClear}" orphan:"true"`
 		TypeMapping        map[string]TypeMapping `name:"typeMapping"         short:"y"  brief:"{CGenDaoBriefTypeMapping}" orphan:"true"`
+		ProjectName        string                 `name:"projectName"         short:"y"  brief:"{CGenDaoBriefTypeMapping}" orphan:"true"`
 	}
 	CGenDaoOutput struct{}
 

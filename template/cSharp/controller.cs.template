@@ -1,6 +1,6 @@
-using CMS.Interface;
+using {{.ProjectName}}.Interface;
 
-namespace CMS.API.Controllers;
+namespace {{.ProjectName}}.API.Controllers;
 
 ///<summary>
 /// {{.TableComment}}管理
@@ -48,6 +48,8 @@ public class {{.ClassName}}Controller : ControllerBase
     public R_SysResBase DeleteAdd{{.ClassName}}([Required] string groupId)
     {
         // 权限验证
+
+        // 执行删除逻辑
         return _processor.Delete{{.ClassName}}(groupId);
     }
 

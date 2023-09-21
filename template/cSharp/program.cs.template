@@ -1,0 +1,4 @@
+/// 下面代码拷贝到 Program.cs 类
+
+{{range $index, $value := .Imports}}
+{{$value}}{{end}}
