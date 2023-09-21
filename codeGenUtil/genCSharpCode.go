@@ -13,6 +13,7 @@ import (
 	_ "path/filepath"
 	"strings"
 	"text/template"
+	"time"
 
 	"github.com/gogf/gf/v2/database/gdb"
 	"github.com/gogf/gf/v2/text/gstr"
@@ -29,6 +30,7 @@ func GenCSharpCode() {
 		db         gdb.DB
 		tbNames    []string
 		classNames []string
+		start      = time.Now()
 	)
 
 	// 加载配置
@@ -72,7 +74,9 @@ func GenCSharpCode() {
 
 	genAddScoped(tbNames)
 
-	log.Printf(color.Cyan("%s 业务代码生成完毕"), tbNames)
+	genRepo(tabs)
+
+	log.Printf(color.Cyan("%s 业务代码生成完毕, 耗时：%s (ms)"), tbNames, time.Since(start))
 }
 
 func genCSharpBizCode(tab Table) {
@@ -109,4 +113,30 @@ func genAddScoped(tbNames []string) {
 	t1.Execute(&b1, tab)
 	fileCreate(b1, "./internal/cSharp/program.cs")
 	log.Printf(color.Cyan("program.cs 生成完毕 引入interface汇总: %s"), tbNames)
+}
+
+func genRepo(tabs []Table) {
+	var imports []string
+
+	for i := range tabs {
+		tab := tabs[i]
+		imports = append(imports, "    /// <summary>")
+		imports = append(imports, "    /// "+tab.TableComment)
+		imports = append(imports, "    /// </summary>")
+
+		im := "    public class " + tab.TableName + "Repo : BaseRepository<" + tab.OriginalTableName + ">"
+		imports = append(imports, im)
+		imports = append(imports, "    {")
+		imports = append(imports, "    }")
+		imports = append(imports, "")
+
+	}
+
+	basePath := "./template/cSharp/"
+	tab := Table{Imports: imports}
+	t1, _ := template.ParseFiles(basePath + "repo.cs.template")
+	var b1 bytes.Buffer
+	t1.Execute(&b1, tab)
+	fileCreate(b1, "./internal/cSharp/repo/repo.cs")
+	log.Printf(color.Cyan("repo.cs 生成完毕 引入interface汇总"))
 }

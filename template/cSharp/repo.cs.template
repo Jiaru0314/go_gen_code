@@ -1,0 +1,7 @@
+using static {{.ProjectName}}.Models.TableModels;
+
+namespace {{.ProjectName}}.Modules;
+{
+{{range $index, $value := .Imports}}
+{{$value}}{{end}}
+}

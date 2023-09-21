@@ -4,7 +4,7 @@ gfcli:
   gen:
     dao:
       - link: "mssql:sa:Yzj123!!@tcp(172.20.16.197:1433)/EAMS?encrypt=disable"
-        tables: "T_SysParameter,T_SysModule,T_SysRole,T_SysRoleModule"
+        tables: "T_SysParameter, T_SysModule, T_SysRole, T_SysRoleModule, T_SysAuditTrail, T_UserDept, T_UserInfo, T_UserPrivilege, T_UserGroupInfo, T_VarGroupLink, T_VarSolution, T_VarProjection, T_VarGroupInfo, T_AlarmFormTemplate, T_AlarmNotification, T_VarGroupUser, T_VarData, T_AlarmData, T_VariableInfo"
         descriptionTag: true
         noModelComment: true
         removePrefix: "T_"
