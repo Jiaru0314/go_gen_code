@@ -18,6 +18,7 @@ import (
 	"github.com/gogf/gf/v2/database/gdb"
 	"github.com/gogf/gf/v2/frame/g"
 	"github.com/gogf/gf/v2/os/gcfg"
+	"github.com/gogf/gf/v2/os/gfile"
 	"github.com/gogf/gf/v2/os/gtime"
 	"github.com/gogf/gf/v2/text/gstr"
 
@@ -130,6 +131,33 @@ func loadConfig(ctx context.Context, in *gendao.CGenDaoInput) {
 		fmt.Sprintf(`%s.%d`, gendao.CGenDaoConfig, 0),
 	).Scan(&in)
 	if err != nil {
-		log.Fatalf(`invalid configuration of "%s": %+v`, gendao.CGenDaoConfig, err)
+		log.Fatalf(`数据库信息配置错误 "%s": %+v`, gendao.CGenDaoConfig, err)
+	}
+
+	if len(strings.TrimSpace(in.Link)) == 0 {
+		log.Fatalf("数据库信息配置错误 link 为空")
+	}
+
+	log.Printf(color.Magenta("当前配置信息 link: ")+color.Green("%s"), in.Link)
+	log.Printf(color.Magenta("当前配置信息 tables: ")+color.Green("%s"), in.Tables)
+	log.Printf(color.Magenta(""))
+}
+
+// checkBefore 前置校验
+func checkBefore(language string) {
+	// 1、校验模板是否存在
+	stat, _ := gfile.Stat("./template")
+	if stat == nil {
+		log.Fatal("模板文件不存在,请检查当前文件路径下是否存在 template文件夹")
+	}
+
+	stat, _ = gfile.Stat("./template/" + language)
+	if stat == nil {
+		log.Fatal("cSharp 模板文件不存在,请检查当前文件路径下是否存在 template/cSharp 文件夹")
+	}
+
+	stat, _ = gfile.Stat("./hack/config.yaml")
+	if stat == nil {
+		log.Fatal("运行配置文件不存在,请检查当前文件路径下是否存在 hack/config.yaml 文件")
 	}
 }

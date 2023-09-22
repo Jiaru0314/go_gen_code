@@ -217,19 +217,20 @@ func GenerateBaseDefinitionForCSharp(ctx context.Context, in GenerateStructDefin
 	buffer := bytes.NewBuffer(nil)
 	array := make([]string, 0)
 	names := sortFieldKeyForDao(in.FieldMap)
+	var space = "        "
 	array = append(array, "{")
 	for _, name := range names {
 		field := in.FieldMap[name]
 		typeDef := getTypeDef(field.Type)
 
-		var definition = "    public " + typeDef + " " + name + " { get; set; }"
-		array = append(array, "")
-		array = append(array, "    /// <summary>")
-		array = append(array, "    /// "+field.Comment)
-		array = append(array, "    /// </summary>")
+		var definition = space + "public " + typeDef + " " + name + " { get; set; }"
+		array = append(array, space+"/// <summary>")
+		array = append(array, space+"/// "+field.Comment)
+		array = append(array, space+"/// </summary>")
 		array = append(array, definition)
+		array = append(array, space)
 	}
-	array = append(array, "}")
+	array = append(array, "    }")
 	tw := tablewriter.NewWriter(buffer)
 	tw.SetBorder(false)
 	tw.SetRowLine(false)
@@ -250,6 +251,10 @@ func GenerateBaseDefinitionForCSharp(ctx context.Context, in GenerateStructDefin
 func getTypeDef(fieldType string) string {
 	if strings.Contains(fieldType, "varchar") {
 		return "string"
+	}
+
+	if strings.Contains(fieldType, "varbinary") {
+		return "byte[]"
 	}
 
 	if strings.Contains(fieldType, "datetime") {

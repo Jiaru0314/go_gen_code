@@ -4,8 +4,20 @@ gfcli:
   gen:
     dao:
       - link: "mssql:sa:Yzj123!!@tcp(172.20.16.197:1433)/EAMS?encrypt=disable"
-        tables: "T_SysParameter, T_SysModule, T_SysRole, T_SysRoleModule, T_SysAuditTrail, T_UserDept, T_UserInfo, T_UserPrivilege, T_UserGroupInfo, T_VarGroupLink, T_VarSolution, T_VarProjection, T_VarGroupInfo, T_AlarmFormTemplate, T_AlarmNotification, T_VarGroupUser, T_VarData, T_AlarmData, T_VariableInfo"
+        tables: "T_SysParameter"
+#        tables: "  "
         descriptionTag: true
         noModelComment: true
         removePrefix: "T_"
         projectName: "EAMS"
+
+# 打包脚本
+  build:
+    name: "code_gen_util"
+    arch: "amd64"
+    system: "windows"
+    mod: "none"
+    packSrc: "resource,manifest"
+    version: "v1.0.0"
+    output: "./bin"
+    extra: ""

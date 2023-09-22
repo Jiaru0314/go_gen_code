@@ -1,72 +1,73 @@
-namespace {{.ProjectName}}.Processor;
+using System.Text;
 
-public class {{.ClassName}}Processor : I{{.ClassName}}Processor
+namespace {{.ProjectName}}.Processor
 {
-    private const string TableName = "{{.OriginalTableName}}";
-    private const string Enabled = "1";
-    private readonly {{.ClassName}}Repo _groupRepo;
-    private readonly IHttpContextAccessor _httpContextAccessor;
 
-    public {{.ClassName}}Processor({{.ClassName}}Repo groupRepo, IHttpContextAccessor httpContextAccessor)
+    public class {{.ClassName}}Processor : I{{.ClassName}}Processor
     {
-        _groupRepo = groupRepo;
-        _httpContextAccessor = httpContextAccessor;
-    }
+        private const string TableName = "{{.OriginalTableName}}";
+        private const string Enabled = "1";
+        private readonly {{.ClassName}}Repo _groupRepo;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
-    public R_SysResBase Add{{.ClassName}}(T_{{.ClassName}} group)
-    {
-        var userId = ContextUtils.GetCurrentUserId(_httpContextAccessor);
-        var bizId = CommonMethod.GetSeqNo(TableName);
-        group.ID = bizId;
-        group.CreateTime = DateTime.Now;
-        group.ModifyTime = DateTime.Now;
-        group.IsEnable = Enabled;
-        group.CreateBy = userId;
-        var addTask = _groupRepo.Add(group);
-        return addTask.Result > 0 ? R_SysResBase.Success(bizId) : R_SysResBase.Fail("新增群组失败");
-    }
-
-    public R_SysResBase Delete{{.ClassName}}(string groupId)
-    {
-        // 事务删除 1、删除群组内人员 2、删除群组
-        var delTask = _groupRepo.DeleteById(groupId);
-        return delTask.Result ? R_SysResBase.Success(groupId) : R_SysResBase.Fail("删除群组失败");
-    }
-
-    public R_SysResBase Update{{.ClassName}}(T_{{.ClassName}} group)
-    {
-        var userId = ContextUtils.GetCurrentUserId(_httpContextAccessor);
-        group.ModifyTime = DateTime.Now;
-        group.ModifyBy = userId;
-        var addTask = _groupRepo.Update(group);
-        return addTask.Result ? R_SysResBase.Success(group.ID) : R_SysResBase.Fail("修改群组失败");
-    }
-
-    public R_SysResBase List{{.ClassName}}(Query{{.ClassName}}Req group)
-    {
-        var queryStr = BulidQueryStr(group);
-        var list = _groupRepo.ListQuerySql(queryStr, null).Result;
-        return R_SysResBase.Success(list);
-    }
-
-    public R_SysResBase Page{{.ClassName}}(Page{{.ClassName}}Req group)
-    {
-        var queryStr = BulidQueryStr(group);
-        var strBody = string.Format(CommonConst.PageStr,
-            queryStr, (group.pageIndex - 1) * group.pageSize, group.pageIndex * group.pageSize);
-
-        var list = _groupRepo.ListQuerySql(strBody, null).Result;
-        return R_SysResBase.Success(list);
-    }
-
-    private string BulidQueryStr(Query{{.ClassName}}Req group)
-    {
-        var sb = new StringBuilder("SELECT * from {{.ClassName}} WHERE IsEnable = '1'");
-        if (!string.IsNullOrEmpty(group.Name))
+        public {{.ClassName}}Processor({{.ClassName}}Repo groupRepo, IHttpContextAccessor httpContextAccessor)
         {
-            sb.Append($" And Name like '%{group.Name}%'");
+            _groupRepo = groupRepo;
+            _httpContextAccessor = httpContextAccessor;
         }
 
-        return sb.ToString();
+        public R_SysResBase Add{{.ClassName}}(T_{{.ClassName}} req)
+        {
+            var userId = ContextUtils.GetCurrentUserId(_httpContextAccessor);
+            var bizId = CommonMethod.GetSeqNo(TableName);
+            req.ID = bizId;
+            req.CreateTime = DateTime.Now;
+            req.CreateBy = userId;
+            var addTask = _groupRepo.Add(req);
+            return addTask.Result > 0 ? R_SysResBase.Success(bizId) : R_SysResBase.Fail("新增{{.TableComment}}失败");
+        }
+
+        public R_SysResBase Delete{{.ClassName}}(string bizId)
+        {
+            // 事务删除
+            var delTask = _groupRepo.DeleteById(bizId);
+            return delTask.Result ? R_SysResBase.Success(bizId) : R_SysResBase.Fail("删除{{.TableComment}}失败");
+        }
+
+        public R_SysResBase Update{{.ClassName}}(T_{{.ClassName}} req)
+        {
+            var userId = ContextUtils.GetCurrentUserId(_httpContextAccessor);
+            req.ModifyTime = DateTime.Now;
+            req.ModifyBy = userId;
+            var addTask = _groupRepo.Update(req);
+            return addTask.Result ? R_SysResBase.Success(req.ID) : R_SysResBase.Fail("修改{{.TableComment}}失败");
+        }
+
+        public R_SysResBase List{{.ClassName}}(Query{{.ClassName}}Req req)
+        {
+            var queryStr = BulidQueryStr(req);
+            var list = _groupRepo.ListQuerySql(queryStr, null).Result;
+            return R_SysResBase.Success(list);
+        }
+
+        public R_SysResBase Page{{.ClassName}}(Page{{.ClassName}}Req req)
+        {
+            var queryStr = BulidQueryStr(req);
+            var strBody = string.Format(CommonConst.PageStr,
+                queryStr, (req.PageIndex - 1) * req.PageSize, req.PageIndex * req.PageSize);
+
+            var list = _groupRepo.ListQuerySql(strBody, null).Result;
+            return R_SysResBase.Success(list);
+        }
+
+        private string BulidQueryStr(Query{{.ClassName}}Req req)
+        {
+            var sb = new StringBuilder("SELECT * from {{.ClassName}} WHERE IsEnable = '1'");
+            // if (!string.IsNullOrEmpty(req.Name))
+            // {
+            //     sb.Append($" And Name like '%{req.Name}%'");
+            // }
+            return sb.ToString();
+        }
     }
 }

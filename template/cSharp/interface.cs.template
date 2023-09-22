@@ -1,14 +1,16 @@
-namespace {{.ProjectName}}.Interface;
-
-public interface I{{.ClassName}}Processor
+namespace {{.ProjectName}}.Interface
 {
-    public R_SysResBase Add{{.ClassName}}({{.OriginalTableName}} group);
 
-    public R_SysResBase Delete{{.ClassName}}(string id);
+    public interface I{{.ClassName}}Processor
+    {
+        public R_SysResBase Add{{.ClassName}}({{.OriginalTableName}} req);
 
-    public R_SysResBase Update{{.ClassName}}({{.OriginalTableName}} group);
+        public R_SysResBase Delete{{.ClassName}}(string bizId);
 
-    public R_SysResBase List{{.ClassName}}(Query{{.ClassName}}Req group);
+        public R_SysResBase Update{{.ClassName}}({{.OriginalTableName}} req);
 
-    public R_SysResBase Page{{.ClassName}}(Page{{.ClassName}}Req group);
+        public R_SysResBase List{{.ClassName}}(Query{{.ClassName}}Req req);
+
+        public R_SysResBase Page{{.ClassName}}(Page{{.ClassName}}Req req);
+    }
 }

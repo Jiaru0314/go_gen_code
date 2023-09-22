@@ -1,0 +1,64 @@
+namespace {{.ProjectName}}.Models
+{
+    /// <summary>
+    /// 返回值模型基类
+    /// </summary>
+    public class R_SysResBase : ResMsg
+    {
+        /// <summary>
+        /// 返回值代号
+        /// </summary>
+        public string resCode { get; set; }
+
+        /// <summary>
+        /// 返回内容
+        /// </summary>
+        public object resStr { get; set; }
+
+        public static R_SysResBase Success(object resStr)
+        {
+            var res = new R_SysResBase
+            {
+                resCode = "1",
+                resStr = resStr
+            };
+            return res;
+        }
+
+        public static R_SysResBase Fail(string tip)
+        {
+            var res = new R_SysResBase
+            {
+                resCode = "0",
+                resTipCN = tip
+            };
+            return res;
+        }
+    }
+
+    /// <summary>
+    /// 返回值消息域
+    /// </summary>
+    public class ResMsg
+    {
+        /// <summary>
+        /// 返回提示CN
+        /// </summary>
+        public string resTipCN { get; set; }
+
+        /// <summary>
+        /// 返回提示EN
+        /// </summary>
+        public string resTipEN { get; set; }
+
+        /// <summary>
+        /// 返回参考值
+        /// </summary>
+        public string resRef { get; set; }
+
+        /// <summary>
+        /// 查询结果数量
+        /// </summary>
+        public int resNum { get; set; }
+    }
+}

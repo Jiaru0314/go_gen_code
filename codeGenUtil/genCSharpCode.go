@@ -24,6 +24,12 @@ import (
 )
 
 func GenCSharpCode() {
+
+	log.Printf(color.Magenta("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"))
+	log.Printf(color.Magenta("                            CSharp Code Gen Start                                  "))
+	log.Printf(color.Magenta("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"))
+	log.Printf(color.Magenta(""))
+
 	var (
 		ctx        = context.Background()
 		in         gendao.CGenDaoInput
@@ -33,11 +39,25 @@ func GenCSharpCode() {
 		start      = time.Now()
 	)
 
+	// 运行前检查
+	checkBefore("cSharp")
+
 	// 加载配置
 	loadConfig(ctx, &in)
 
 	// 获取数据库对象
 	db = getDB(in)
+
+	// 设置tables
+	if len(strings.TrimSpace(in.Tables)) == 0 {
+		tablesRes, err := db.Query(ctx, consts.SQL_SERVER_TABLES)
+		if err != nil {
+			log.Fatalf(color.Cyan("%s 获取业务表信息失败"), err)
+		}
+		in.Tables = tablesRes[0]["TableNames"].String()
+		log.Printf(color.Magenta("配置信息 tables为空,默认获取当前数据库所有表: ")+color.Green("%s"), in.Tables)
+		log.Printf("")
+	}
 
 	fieldMap, err := db.Query(ctx, consts.SQL_SERVER_ShowTableStatus)
 	if err != nil {
@@ -76,7 +96,10 @@ func GenCSharpCode() {
 
 	genRepo(tabs)
 
-	log.Printf(color.Cyan("%s 业务代码生成完毕, 耗时：%s (ms)"), tbNames, time.Since(start))
+	genCommon(in.ProjectName)
+	log.Printf(color.Magenta("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"))
+	log.Printf(color.Magenta("                        CSharp Code Gen End Cost :%s                                "), time.Since(start))
+	log.Printf(color.Magenta("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"))
 }
 
 func genCSharpBizCode(tab Table) {
@@ -86,21 +109,33 @@ func genCSharpBizCode(tab Table) {
 	t4, _ := template.ParseFiles(basePath + "interface.cs.template")
 	t5, _ := template.ParseFiles(basePath + "processor.cs.template")
 
-	var b2, b3, b4, b5 bytes.Buffer
-	t2.Execute(&b2, tab)
-	t3.Execute(&b3, tab)
-	t4.Execute(&b4, tab)
-	t5.Execute(&b5, tab)
+	genByTemplate(t2, "./internal/cSharp/model/"+tab.OriginalTableName+".cs", tab)
+	genByTemplate(t3, "./internal/cSharp/controller/"+tab.TableName+"Controller.cs", tab)
+	genByTemplate(t4, "./internal/cSharp/interface/I"+tab.TableName+"Processor.cs", tab)
+	genByTemplate(t5, "./internal/cSharp/processor/"+tab.TableName+"Processor.cs", tab)
+}
 
-	fileCreate(b2, "./internal/cSharp/model/"+tab.OriginalTableName+".cs")
-	fileCreate(b3, "./internal/cSharp/controller/"+tab.TableName+"Controller.cs")
-	fileCreate(b4, "./internal/cSharp/interface/"+"I"+tab.TableName+"Processor.cs")
-	fileCreate(b5, "./internal/cSharp/processor/"+tab.TableName+"Processor.cs")
+func genByTemplate(t *template.Template, filename string, tab Table) {
+	if t == nil {
+		log.Printf(color.Red("模板文件缺失,导致 %s 生成失败"), filename)
+		return
+	}
+
+	var b bytes.Buffer
+	t.Execute(&b, tab)
+	fileCreate(b, filename)
 }
 
 func genAddScoped(tbNames []string) {
 	var imports []string
+	imports = append(imports, "// Repo 注入")
+	for i := range tbNames {
+		im := "builder.Services.AddScoped<" + tbNames[i] + "Repo>();"
+		imports = append(imports, im)
+	}
 
+	imports = append(imports, "")
+	imports = append(imports, "// Processor 注入")
 	for i := range tbNames {
 		im := "builder.Services.AddScoped<I" + tbNames[i] + "Processor, " + tbNames[i] + "Processor>();"
 		imports = append(imports, im)
@@ -112,7 +147,7 @@ func genAddScoped(tbNames []string) {
 	var b1 bytes.Buffer
 	t1.Execute(&b1, tab)
 	fileCreate(b1, "./internal/cSharp/program.cs")
-	log.Printf(color.Cyan("program.cs 生成完毕 引入interface汇总: %s"), tbNames)
+	log.Printf(color.Green("program.cs 生成完毕"))
 }
 
 func genRepo(tabs []Table) {
@@ -133,10 +168,20 @@ func genRepo(tabs []Table) {
 	}
 
 	basePath := "./template/cSharp/"
-	tab := Table{Imports: imports}
+	tab := Table{Imports: imports, ProjectName: tabs[0].ProjectName}
 	t1, _ := template.ParseFiles(basePath + "repo.cs.template")
 	var b1 bytes.Buffer
 	t1.Execute(&b1, tab)
 	fileCreate(b1, "./internal/cSharp/repo/repo.cs")
-	log.Printf(color.Cyan("repo.cs 生成完毕 引入interface汇总"))
+	log.Printf(color.Green("repo.cs 生成完毕 "))
+}
+
+func genCommon(projectName string) {
+	basePath := "./template/cSharp/"
+	t2, _ := template.ParseFiles(basePath + "contextUtils.cs.template")
+	tab := Table{ProjectName: projectName}
+	genByTemplate(t2, "./internal/cSharp/common/"+"ContextUtils.cs", tab)
+
+	t1, _ := template.ParseFiles(basePath + "r_result.cs.template")
+	genByTemplate(t1, "./internal/cSharp/common/"+"R_Result.cs", tab)
 }

@@ -1,0 +1,11 @@
+namespace {{.ProjectName}}.Processor
+{
+    public class ContextUtils
+    {
+        public static string? GetCurrentUserId(IHttpContextAccessor accessor)
+        {
+            var httpContext = accessor.HttpContext;
+            return httpContext?.User.Identity?.Name;
+        }
+    }
+}

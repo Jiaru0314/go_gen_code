@@ -1,6 +1,6 @@
-using static {{.ProjectName}}.Models.TableModels;
+using {{.ProjectName}}.Models;
 
-namespace {{.ProjectName}}.Modules;
+namespace {{.ProjectName}}.Modules
 {
 {{range $index, $value := .Imports}}
 {{$value}}{{end}}

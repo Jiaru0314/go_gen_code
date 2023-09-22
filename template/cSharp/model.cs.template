@@ -1,10 +1,36 @@
 using SqlSugar;
 
-namespace {{.ProjectName}}.Models;
-
-/// <summary>
-/// {{.TableComment}}
-/// </summary>
-[SugarTable("{{.OriginalTableName}}")]
-public class {{.OriginalTableName}}
+namespace {{.ProjectName}}.Models
+{
+    /// <summary>
+    /// {{.TableComment}}
+    /// </summary>
+    [SugarTable("{{.OriginalTableName}}")]
+    public class {{.OriginalTableName}}
 {{.BaseDefinition}}
+    
+    public class Add{{.ClassName}}Req
+    {
+    }
+
+    public class Update{{.ClassName}}Req
+    {
+    }
+
+    public class Query{{.ClassName}}Req
+    {
+    }
+
+    public class Page{{.ClassName}}Req : Query{{.ClassName}}Req
+    {
+        /// <summary> 
+        /// 分页页码 
+        /// </summary> 
+        public int PageIndex { get; set; }
+
+        /// <summary> 
+        /// 分页数量
+        /// </summary> 
+        public int PageSize { get; set; }
+    }
+}
