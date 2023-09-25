@@ -6,13 +6,12 @@ namespace {{.ProjectName}}.Processor
     public class {{.ClassName}}Processor : I{{.ClassName}}Processor
     {
         private const string TableName = "{{.OriginalTableName}}";
-        private const string Enabled = "1";
-        private readonly {{.ClassName}}Repo _groupRepo;
+        private readonly {{.ClassName}}Repo _{{.Path}}Repo;
         private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public {{.ClassName}}Processor({{.ClassName}}Repo groupRepo, IHttpContextAccessor httpContextAccessor)
+        public {{.ClassName}}Processor({{.ClassName}}Repo {{.Path}}Repo, IHttpContextAccessor httpContextAccessor)
         {
-            _groupRepo = groupRepo;
+            _{{.Path}}Repo = {{.Path}}Repo;
             _httpContextAccessor = httpContextAccessor;
         }
 
@@ -23,14 +22,14 @@ namespace {{.ProjectName}}.Processor
             req.ID = bizId;
             req.CreateTime = DateTime.Now;
             req.CreateBy = userId;
-            var addTask = _groupRepo.Add(req);
+            var addTask = _{{.Path}}Repo.Add(req);
             return addTask.Result > 0 ? R_SysResBase.Success(bizId) : R_SysResBase.Fail("新增{{.TableComment}}失败");
         }
 
         public R_SysResBase Delete{{.ClassName}}(string bizId)
         {
             // 事务删除
-            var delTask = _groupRepo.DeleteById(bizId);
+            var delTask = _{{.Path}}Repo.DeleteById(bizId);
             return delTask.Result ? R_SysResBase.Success(bizId) : R_SysResBase.Fail("删除{{.TableComment}}失败");
         }
 
@@ -39,14 +38,14 @@ namespace {{.ProjectName}}.Processor
             var userId = ContextUtils.GetCurrentUserId(_httpContextAccessor);
             req.ModifyTime = DateTime.Now;
             req.ModifyBy = userId;
-            var addTask = _groupRepo.Update(req);
-            return addTask.Result ? R_SysResBase.Success(req.ID) : R_SysResBase.Fail("修改{{.TableComment}}失败");
+            var updateTask = _{{.Path}}Repo.Update(req);
+            return updateTask.Result ? R_SysResBase.Success(req.ID) : R_SysResBase.Fail("修改{{.TableComment}}失败");
         }
 
         public R_SysResBase List{{.ClassName}}(Query{{.ClassName}}Req req)
         {
             var queryStr = BulidQueryStr(req);
-            var list = _groupRepo.ListQuerySql(queryStr, null).Result;
+            var list = _{{.Path}}Repo.ListQuerySql(queryStr, null).Result;
             return R_SysResBase.Success(list);
         }
 
@@ -56,16 +55,16 @@ namespace {{.ProjectName}}.Processor
             var strBody = string.Format(CommonConst.PageStr,
                 queryStr, (req.PageIndex - 1) * req.PageSize, req.PageIndex * req.PageSize);
 
-            var list = _groupRepo.ListQuerySql(strBody, null).Result;
+            var list = _{{.Path}}Repo.ListQuerySql(strBody, null).Result;
             return R_SysResBase.Success(list);
         }
 
         private string BulidQueryStr(Query{{.ClassName}}Req req)
         {
-            var sb = new StringBuilder("SELECT * from {{.ClassName}} WHERE IsEnable = '1'");
+            var sb = new StringBuilder("SELECT * from {{.OriginalTableName}}");
             // if (!string.IsNullOrEmpty(req.Name))
             // {
-            //     sb.Append($" And Name like '%{req.Name}%'");
+            //     sb.Append($" WHERE Name like '%{req.Name}%'");
             // }
             return sb.ToString();
         }

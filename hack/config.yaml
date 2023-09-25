@@ -4,14 +4,14 @@ gfcli:
   gen:
     dao:
       - link: "mssql:sa:Yzj123!!@tcp(172.20.16.197:1433)/EAMS?encrypt=disable"
-        tables: "T_SysParameter"
-#        tables: "  "
+        #        tables: "T_SysParameter,T_AlarmNotification,T_UserDept"
+        tables: "  "
         descriptionTag: true
         noModelComment: true
         removePrefix: "T_"
         projectName: "EAMS"
 
-# 打包脚本
+  # 打包脚本
   build:
     name: "code_gen_util"
     arch: "amd64"

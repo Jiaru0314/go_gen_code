@@ -17,6 +17,7 @@ import (
 
 	"github.com/gogf/gf/v2/database/gdb"
 	"github.com/gogf/gf/v2/text/gstr"
+	"github.com/olekukonko/tablewriter"
 
 	"github.com/Jiaru0314/go_gen_code/gendao"
 	"github.com/Jiaru0314/go_gen_code/internal/consts"
@@ -72,10 +73,15 @@ func GenCSharpCode() {
 		}
 
 		newTbName := gstr.CaseCamel(tbName)
+		tableComment := fieldMap[i]["Comment"].String()
+		if tableComment != "" && strings.Contains(tableComment, "表") {
+			tableComment = strings.ReplaceAll(tableComment, "表", "")
+		}
+
 		tab := Table{
 			ClassName:         newTbName,
 			TableName:         tbName,
-			TableComment:      fieldMap[i]["Comment"].String(),
+			TableComment:      tableComment,
 			OriginalTableName: oriTbName,
 			Path:              toLow(newTbName),
 			ProjectName:       in.ProjectName,
@@ -97,6 +103,8 @@ func GenCSharpCode() {
 	genRepo(tabs)
 
 	genCommon(in.ProjectName)
+
+	genMapper(tabs)
 	log.Printf(color.Magenta("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"))
 	log.Printf(color.Magenta("                        CSharp Code Gen End Cost :%s                                "), time.Since(start))
 	log.Printf(color.Magenta("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"))
@@ -184,4 +192,30 @@ func genCommon(projectName string) {
 
 	t1, _ := template.ParseFiles(basePath + "r_result.cs.template")
 	genByTemplate(t1, "./internal/cSharp/common/"+"R_Result.cs", tab)
+}
+
+func genMapper(tabs []Table) {
+	buffer := bytes.NewBuffer(nil)
+	array := make([]string, 0)
+	var space = "            "
+	for _, tab := range tabs {
+		array = append(array, space)
+		array = append(array, space+"cfg.CreateMap<Add"+tab.TableName+"Req,"+tab.OriginalTableName+">();")
+		array = append(array, space+"cfg.CreateMap<Update"+tab.TableName+"Req,"+tab.OriginalTableName+">();")
+	}
+	tw := tablewriter.NewWriter(buffer)
+	tw.SetBorder(false)
+	tw.SetRowLine(false)
+	tw.SetAutoWrapText(false)
+	tw.SetColumnSeparator("\n")
+	tw.Append(array)
+	tw.Render()
+	stContent := buffer.String()
+	buffer.Reset()
+	buffer.WriteString(stContent)
+
+	basePath := "./template/cSharp/"
+	t2, _ := template.ParseFiles(basePath + "mapper.cs.template")
+	tab := Table{MapperConfiguration: stContent}
+	genByTemplate(t2, "./internal/cSharp/mapper/"+"MapperConfig.cs", tab)
 }

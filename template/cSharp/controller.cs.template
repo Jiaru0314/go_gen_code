@@ -1,5 +1,3 @@
-using {{.ProjectName}}.Interface;
-
 namespace {{.ProjectName}}.API.Controllers
 {
     ///<summary>
@@ -11,6 +9,7 @@ namespace {{.ProjectName}}.API.Controllers
     public class {{.ClassName}}Controller : ControllerBase
     {
         private readonly I{{.ClassName}}Processor _processor;
+        private readonly Mapper _mapper = MapperConfig.InitializeAutomapper();
 
         /// <summary>
         /// 构造函数
@@ -32,25 +31,23 @@ namespace {{.ProjectName}}.API.Controllers
             // 权限验证
 
             // 业务模型转换
-            var {{.ClassName}} = new {{.OriginalTableName}}
-            {
-               
-            };
+            var varProjection = _mapper.Map<{{.OriginalTableName}}>(req);
+
             return _processor.Add{{.ClassName}}({{.ClassName}});
         }
 
         /// <summary>
         /// 删除{{.TableComment}}
         /// </summary>
-        /// <param name="groupId"></param>
+        /// <param name="id"></param>
         /// <returns></returns>
         [HttpDelete]
-        public R_SysResBase DeleteAdd{{.ClassName}}([Required] string groupId)
+        public R_SysResBase DeleteAdd{{.ClassName}}([Required] string id)
         {
             // 权限验证
 
             // 执行删除逻辑
-            return _processor.Delete{{.ClassName}}(groupId);
+            return _processor.Delete{{.ClassName}}(id);
         }
 
         /// <summary>
@@ -64,10 +61,7 @@ namespace {{.ProjectName}}.API.Controllers
             // 权限验证
 
             // 业务模型转换
-            var data = new {{.OriginalTableName}}
-            {
-              
-            };
+            var varProjection = _mapper.Map<{{.OriginalTableName}}>(req);
 
             return _processor.Update{{.ClassName}}(data);
         }

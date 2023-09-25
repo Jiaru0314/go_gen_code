@@ -217,6 +217,7 @@ func GenerateBaseDefinitionForCSharp(ctx context.Context, in GenerateStructDefin
 	buffer := bytes.NewBuffer(nil)
 	array := make([]string, 0)
 	names := sortFieldKeyForDao(in.FieldMap)
+	priKey := getPri(in.FieldMap)
 	var space = "        "
 	array = append(array, "{")
 	for _, name := range names {
@@ -227,6 +228,9 @@ func GenerateBaseDefinitionForCSharp(ctx context.Context, in GenerateStructDefin
 		array = append(array, space+"/// <summary>")
 		array = append(array, space+"/// "+field.Comment)
 		array = append(array, space+"/// </summary>")
+		if name == priKey {
+			array = append(array, space+"[SugarColumn(IsPrimaryKey = true, ColumnName = \"ID\")]")
+		}
 		array = append(array, definition)
 		array = append(array, space)
 	}
@@ -266,4 +270,14 @@ func getTypeDef(fieldType string) string {
 	}
 
 	return "undefined"
+}
+
+func getPri(fieldMap map[string]*gdb.TableField) string {
+	for s := range fieldMap {
+		field := fieldMap[s]
+		if field.Key == "PRI" && field.Name == "ID" {
+			return field.Name
+		}
+	}
+	return ""
 }

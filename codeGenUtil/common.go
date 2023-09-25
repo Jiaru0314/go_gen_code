@@ -28,14 +28,15 @@ import (
 )
 
 type Table struct {
-	ProjectName       string
-	ClassName         string
-	TableName         string
-	TableComment      string
-	Imports           []string
-	BaseDefinition    string
-	OriginalTableName string
-	Path              string
+	ProjectName         string
+	ClassName           string
+	TableName           string
+	TableComment        string
+	Imports             []string
+	BaseDefinition      string
+	OriginalTableName   string
+	Path                string
+	MapperConfiguration string
 }
 
 type BizRouter struct {
