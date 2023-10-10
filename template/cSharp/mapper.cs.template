@@ -1,17 +1,11 @@
+using AutoMapper;
+
 namespace {{.ProjectName}}.Models.Mapper;
 
-public class MapperConfig
+public class MappingProfile : Profile
 {
-    public static AutoMapper.Mapper InitializeAutomapper()
+    public MappingProfile()
     {
-        //Provide all the Mapping Configuration
-        var config = new MapperConfiguration(cfg =>
-        {
-            {{.MapperConfiguration}}
-            //Any Other Mapping Configuration ....
-        });
-        //Create an Instance of Mapper and return that Instance
-        var mapper = new AutoMapper.Mapper(config);
-        return mapper;
+        {{.MapperConfiguration}}
     }
 }

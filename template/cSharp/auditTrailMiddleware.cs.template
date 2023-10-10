@@ -1,0 +1,146 @@
+using EAMS.API.Controllers;
+
+namespace EAMS.API.Middlewares;
+
+/// <summary>
+/// 全局操作日志处理器
+/// </summary>
+public class AuditTrailMiddleware
+{
+    private readonly RequestDelegate _next;
+    private const string TableName = "T_SysAuditTrail";
+
+    /// <summary>
+    /// 构造函数
+    /// </summary>
+    /// <param name="next"></param>
+    public AuditTrailMiddleware(RequestDelegate next)
+    {
+        _next = next;
+    }
+
+    /// <summary>
+    /// Invoke
+    /// </summary>
+    /// <param name="context"></param>
+    /// <param name="trailRepo"></param>
+    /// <param name="logger"></param>
+    public async Task InvokeAsync(HttpContext context, SysAuditTrailRepo trailRepo,
+        ILogger<AuditTrailMiddleware> logger)
+    {
+        // 是否已放行别的中间件
+        var hasPass = false;
+
+        // catch 异常、防止特殊情况影响业务
+        try
+        {
+            // 获取有关请求的详细信息 如果是GET请求 放过,只记录操作数据的请求
+            var method = context.Request.Method;
+            if (method == HttpMethod.Get.ToString())
+            {
+                // 放行别的控制器 或中间件
+                await _next(context);
+                hasPass = true;
+                return;
+            }
+
+            // 获取请求路径
+            var path = context.Request.Path;
+            CommonConst.LogMap.TryGetValue(path, out var description);
+
+            // 读取请求体 并将请求体重新放回请求中，以便后续中间件或控制器方法使用
+            context.Request.EnableBuffering();
+            var requestBody = await ReadRequestBody(context.Request);
+            context.Request.Body = GenerateStreamFromString(requestBody);
+
+            // 在响应生成后获取响应流
+            var originalResponseStream = context.Response.Body;
+            string responseContent;
+            using (var ms = new MemoryStream())
+            {
+                context.Response.Body = ms;
+
+                // 放行别的控制器 或中间件
+                await _next(context);
+                hasPass = true;
+                ms.Position = 0;
+                var responseReader = new StreamReader(ms);
+                responseContent = await responseReader.ReadToEndAsync();
+                ms.Position = 0;
+                await ms.CopyToAsync(originalResponseStream);
+                context.Response.Body = originalResponseStream;
+            }
+
+            // 获取状态码
+            var statusCode = context.Response.StatusCode;
+            // 从上下文获取当前用户的标识 (用户名、ID 等) 如果是登录/注册请求,从请求体中获取
+            var userId = context.User.Identity?.Name;
+            if (CommonConst.LoginPath.Equals(path) || CommonConst.RegisterPath.Equals(path))
+            {
+                var reqData = JsonConvert.DeserializeObject<LoginRequestDTO>(requestBody);
+                if (reqData != null)
+                {
+                    userId = reqData.UserId;
+
+                    // 对登录请求中的密码进行加密
+                    var sm4Utils = new SM4Utils();
+                    reqData.Password =
+                        sm4Utils.Encrypt_ECB(string.IsNullOrEmpty(reqData.Password) ? "" : reqData.Password);
+                    requestBody = JsonConvert.SerializeObject(reqData);
+                }
+            }
+
+            // 构建操作日志消息
+            var logMessage = $"用户: {userId} 在 [{DateTime.Now}] 请求 {path} 执行 {description}" +
+                             $"响应码: {statusCode} \n 请求体: {requestBody}  响应体: {responseContent} ";
+
+            // 这里可以将操作日志记录到文件、数据库或其他存储中
+            logger.LogInformation(logMessage);
+
+            // 保存到数据库
+            var resData = JsonConvert.DeserializeObject<R>(responseContent);
+            var bizId = CommonMethod.GetSeqNo(TableName);
+            var sysAuditTrail = new T_SysAuditTrail();
+            sysAuditTrail.Description = $"用户 [{userId}] 进行{description}";
+            sysAuditTrail.Method = path;
+            sysAuditTrail.InputParam = requestBody;
+            sysAuditTrail.OutputCode = resData?.resCode;
+            sysAuditTrail.OutputMessage = resData?.resTipCN;
+            sysAuditTrail.ID = bizId;
+            sysAuditTrail.ActionTime = DateTime.Now;
+            sysAuditTrail.CreateBy = userId;
+
+            await trailRepo.Add(sysAuditTrail);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "记录操作日志出现异常: {Message}, 堆栈跟踪:{StackTrace}", ex.Message, ex.StackTrace);
+            if (!hasPass)
+            {
+                await _next(context);
+            }
+        }
+    }
+
+    private static async Task<string> ReadRequestBody(HttpRequest request)
+    {
+        using var reader = new StreamReader(request.Body);
+        return await reader.ReadToEndAsync();
+    }
+
+    private static Stream GenerateStreamFromString(string s)
+    {
+        var stream = new MemoryStream();
+        var writer = new StreamWriter(stream);
+        writer.Write(s);
+        writer.Flush();
+        stream.Position = 0;
+        return stream;
+    }
+
+    private class R
+    {
+        public string? resCode { get; set; } = "0";
+        public string? resTipCN { get; set; } = "";
+    }
+}

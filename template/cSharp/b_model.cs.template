@@ -1,0 +1,37 @@
+using {{.ProjectName}}.Utils;
+
+namespace {{.ProjectName}}.Models
+{
+    public class BaseModel
+    {
+        /// <summary>
+        /// Page
+        /// </summary>
+        public string Page { get; set; }
+
+        /// <summary>
+        /// Control
+        /// </summary>
+        public string Control { get; set; }
+    }
+
+    public class UpdateStatusReq : BaseModel
+    {
+        /// <summary>
+        /// ID
+        /// </summary>
+        public string ID { get; set; }
+
+        /// <summary>
+        /// 是否可用
+        /// </summary>
+        public string IsEnable { get; set; }
+
+        public void CheckParam()
+        {
+            // 业务逻辑验证
+            ParamUtils.NotEmpty(ID, "ID 不能为空");
+            ParamUtils.NotEmpty(IsEnable, "状态 不能为空");
+        }
+    }
+}

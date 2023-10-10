@@ -28,7 +28,7 @@ namespace {{.ProjectName}}.API.Controllers
         [HttpPost]
         public R_SysResBase Add{{.ClassName}}([FromBody] Add{{.ClassName}}Req req)
         {
-            // 权限验证
+            // 业务参数验证
 
             // 业务模型转换
             var varProjection = _mapper.Map<{{.OriginalTableName}}>(req);
@@ -39,13 +39,11 @@ namespace {{.ProjectName}}.API.Controllers
         /// <summary>
         /// 删除{{.TableComment}}
         /// </summary>
-        /// <param name="id"></param>
+        /// <param name="id"> 业务ID/模型ID </param>
         /// <returns></returns>
         [HttpDelete]
-        public R_SysResBase DeleteAdd{{.ClassName}}([Required] string id)
+        public R_SysResBase Delete{{.ClassName}}([Required] string id)
         {
-            // 权限验证
-
             // 执行删除逻辑
             return _processor.Delete{{.ClassName}}(id);
         }
@@ -58,14 +56,60 @@ namespace {{.ProjectName}}.API.Controllers
         [HttpPut]
         public R_SysResBase Update{{.ClassName}}([FromBody] Update{{.ClassName}}Req req)
         {
-            // 权限验证
+            // 业务参数验证
 
             // 业务模型转换
-            var varProjection = _mapper.Map<{{.OriginalTableName}}>(req);
+            var data = _mapper.Map<{{.OriginalTableName}}>(req);
 
             return _processor.Update{{.ClassName}}(data);
         }
 
+        {{- if .HasEnable }}
+
+        /// <summary>
+        /// 更新{{.TableComment}}状态
+        /// </summary>
+        /// <param name="req"></param>
+        /// <returns></returns>
+        [HttpPut]
+        public R_SysResBase Update{{.ClassName}}Status([FromBody] UpdateStatusReq req)
+        {
+            // 业务逻辑验证
+            req.CheckParam();
+
+            // 执行删除逻辑
+            var data = new {{.OriginalTableName}}()
+            {
+                ID = req.ID,
+                IsEnable = req.IsEnable
+            };
+            return _processor.Update{{.ClassName}}(data);
+        }
+        {{end}}
+
+
+        {{- if .HasStatus }}
+
+        /// <summary>
+        /// 更新{{.TableComment}}状态
+        /// </summary>
+        /// <param name="req"></param>
+        /// <returns></returns>
+        [HttpPut]
+        public R_SysResBase Update{{.ClassName}}Status([FromBody] UpdateStatusReq req)
+        {
+            // 业务逻辑验证
+            req.CheckParam();
+
+            // 执行删除逻辑
+            var data = new {{.OriginalTableName}}()
+            {
+                ID = req.ID,
+                Status = req.IsEnable
+            };
+            return _processor.Update{{.ClassName}}(data);
+        }
+        {{end}}
         /// <summary>
         /// 查询{{.TableComment}}列表
         /// </summary>
@@ -73,19 +117,17 @@ namespace {{.ProjectName}}.API.Controllers
         [HttpGet]
         public R_SysResBase List{{.ClassName}}()
         {
-           
             // 参数转换
             var req = new Query{{.ClassName}}Req();
             
             return _processor.List{{.ClassName}}(req);
         }
 
-
         /// <summary>
         /// 分页检索{{.TableComment}}
         /// </summary>
-        /// <param name="pageIndex"></param>
-        /// <param name="pageSize"></param>
+        /// <param name="pageIndex">分页索引</param>
+        /// <param name="pageSize">每页数量</param>
         /// <returns></returns>
         [HttpGet]
         public R_SysResBase Page{{.ClassName}}(int pageIndex,int pageSize)

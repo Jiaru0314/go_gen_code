@@ -8,12 +8,16 @@ namespace {{.ProjectName}}.Models
     [SugarTable("{{.OriginalTableName}}")]
     public class {{.OriginalTableName}}
 {{.BaseDefinition}}
-    
-    public class Add{{.ClassName}}Req
+
+    public class {{.ClassName}}Base : BaseModel
     {
     }
 
-    public class Update{{.ClassName}}Req
+    public class Add{{.ClassName}}Req : {{.ClassName}}Base
+    {
+    }
+
+    public class Update{{.ClassName}}Req : {{.ClassName}}Base
     {
     }
 

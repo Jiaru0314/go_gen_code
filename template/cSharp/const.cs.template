@@ -1,0 +1,29 @@
+namespace {{.ProjectName}}.Modules;
+
+public abstract class CommonConst
+{
+    // 根据ID排序
+    public const string PageStr =
+        "with origin as ({0}) select *,(select count(1) from origin) TotalPage  from(select t.*  from(select rn = ROW_NUMBER() over(order by a.ID desc), * from origin a) t) tt where tt.rn > {1} and tt.rn <= {2}";
+
+    public const string PageByModifyTimeStr =
+        "with origin as ({0}) select *,(select count(1) from origin) TotalPage  from(select t.*  from(select rn = ROW_NUMBER() over(order by a.ModifyTime desc), * from origin a) t) tt where tt.rn > {1} and tt.rn <= {2}";
+
+    public const int DefaultPageIndex = 1;
+
+    public const int DefaultPageSize = 10;
+
+    public const string Enabled = "1";
+
+    public const string LoginPath = "/Authenticate/Login";
+
+    public const string RegisterPath = "/UserInfo/Register";
+
+    public const string InitPassword = "InitialPassword";
+
+    // 定义只读的常量映射 用于操作日志相关
+    public static readonly Dictionary<string, string> LogMap = new()
+    {
+       {{.LogMaps}}
+    };
+}

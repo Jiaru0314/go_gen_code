@@ -37,11 +37,14 @@ type Table struct {
 	OriginalTableName   string
 	Path                string
 	MapperConfiguration string
+	LogMaps             string
+	HasEnable           bool
+	HasStatus           bool
 }
 
 type BizRouter struct {
 	ProjectName string
-	ClassNames  []string
+	ClassNames  []*string
 }
 
 func getProjectName() string {
@@ -82,7 +85,7 @@ func fileCreate(content bytes.Buffer, name string) {
 	log.Printf(color.Green("generated: %s"), name)
 }
 
-func getDB(in gendao.CGenDaoInput) (res gdb.DB) {
+func getDB(in *gendao.CGenDaoInput) (res *gdb.DB) {
 	var (
 		db  gdb.DB
 		err error
@@ -100,7 +103,7 @@ func getDB(in gendao.CGenDaoInput) (res gdb.DB) {
 		log.Fatal(`database initialization failed, may be invalid database configuration`)
 	}
 
-	return db
+	return &db
 }
 
 func genBaseDefinition(db gdb.DB, tableName, language string) string {

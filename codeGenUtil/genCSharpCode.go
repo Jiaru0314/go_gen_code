@@ -24,6 +24,8 @@ import (
 	"github.com/Jiaru0314/go_gen_code/internal/utils/color"
 )
 
+const basePath = "./template/cSharp/"
+
 func GenCSharpCode() {
 
 	log.Printf(color.Magenta("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"))
@@ -32,12 +34,11 @@ func GenCSharpCode() {
 	log.Printf(color.Magenta(""))
 
 	var (
-		ctx        = context.Background()
-		in         gendao.CGenDaoInput
-		db         gdb.DB
-		tbNames    []string
-		classNames []string
-		start      = time.Now()
+		ctx     = context.Background()
+		in      gendao.CGenDaoInput
+		db      *gdb.DB
+		tbNames []string
+		start   = time.Now()
 	)
 
 	// 运行前检查
@@ -47,19 +48,40 @@ func GenCSharpCode() {
 	loadConfig(ctx, &in)
 
 	// 获取数据库对象
-	db = getDB(in)
+	db = getDB(&in)
 
 	// 设置tables
 	if len(strings.TrimSpace(in.Tables)) == 0 {
-		tablesRes, err := db.Query(ctx, consts.SQL_SERVER_TABLES)
-		if err != nil {
-			log.Fatalf(color.Cyan("%s 获取业务表信息失败"), err)
-		}
-		in.Tables = tablesRes[0]["TableNames"].String()
-		log.Printf(color.Magenta("配置信息 tables为空,默认获取当前数据库所有表: ")+color.Green("%s"), in.Tables)
-		log.Printf("")
+		in.Tables = getTables(ctx, *db)
 	}
 
+	// 获取实体定义
+	tabs := getTableDefinition(ctx, *db, &tbNames, in.Tables, in.ProjectName)
+
+	// 生成业务代码
+	for i := range tabs {
+		tb := tabs[i]
+		tb.BaseDefinition = genBaseDefinition(*db, tb.OriginalTableName, "CSharp")
+		genCSharpBizCode(tb)
+	}
+
+	genAddScoped(tbNames)
+
+	genRepo(tabs)
+
+	genCommon(in.ProjectName)
+
+	genMiddleware(in.ProjectName)
+
+	genMapper(tabs)
+
+	genAuditLogMap(tabs)
+	log.Printf(color.Magenta("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"))
+	log.Printf(color.Magenta("                        CSharp Code Gen End Cost :%s                                "), time.Since(start))
+	log.Printf(color.Magenta("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"))
+}
+
+func getTableDefinition(ctx context.Context, db gdb.DB, tbNames *[]string, tables, projectName string) []Table {
 	fieldMap, err := db.Query(ctx, consts.SQL_SERVER_ShowTableStatus)
 	if err != nil {
 		log.Fatalf(color.Cyan("%s 获取业务表信息失败"), err)
@@ -68,7 +90,7 @@ func GenCSharpCode() {
 	for i := range fieldMap {
 		oriTbName := fieldMap[i]["Name"].String()
 		tbName := strings.Replace(oriTbName, "T_", "", 1)
-		if !strings.Contains(in.Tables, tbName) {
+		if !strings.Contains(tables, tbName) {
 			continue
 		}
 
@@ -84,34 +106,33 @@ func GenCSharpCode() {
 			TableComment:      tableComment,
 			OriginalTableName: oriTbName,
 			Path:              toLow(newTbName),
-			ProjectName:       in.ProjectName,
+			ProjectName:       projectName,
 		}
 		tabs = append(tabs, tab)
-		tbNames = append(tbNames, tab.TableName)
-		classNames = append(classNames, tab.ClassName)
+		*tbNames = append(*tbNames, tab.TableName)
 	}
+	return tabs
+}
 
-	// 生成业务代码
-	for i := range tabs {
-		tb := tabs[i]
-		tb.BaseDefinition = genBaseDefinition(db, tb.OriginalTableName, "CSharp")
-		genCSharpBizCode(tb)
+func getTables(ctx context.Context, db gdb.DB) string {
+	tablesRes, err := db.Query(ctx, consts.SQL_SERVER_TABLES)
+	if err != nil {
+		log.Fatalf(color.Cyan("%s 获取业务表信息失败"), err)
 	}
-
-	genAddScoped(tbNames)
-
-	genRepo(tabs)
-
-	genCommon(in.ProjectName)
-
-	genMapper(tabs)
-	log.Printf(color.Magenta("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"))
-	log.Printf(color.Magenta("                        CSharp Code Gen End Cost :%s                                "), time.Since(start))
-	log.Printf(color.Magenta("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"))
+	res := tablesRes[0]["TableNames"].String()
+	log.Printf(color.Magenta("配置信息 tables为空,默认获取当前数据库所有表: ")+color.Green("%s"), res)
+	log.Printf("")
+	return res
 }
 
 func genCSharpBizCode(tab Table) {
-	basePath := "./template/cSharp/"
+	// 设置是否包含 IsEnable/ Status 这类字段 特殊处理
+	if strings.Contains(tab.BaseDefinition, "IsEnable") {
+		tab.HasEnable = true
+	} else if strings.Contains(tab.BaseDefinition, "Status") {
+		tab.HasStatus = true
+	}
+
 	t2, _ := template.ParseFiles(basePath + "model.cs.template")
 	t3, _ := template.ParseFiles(basePath + "controller.cs.template")
 	t4, _ := template.ParseFiles(basePath + "interface.cs.template")
@@ -136,6 +157,9 @@ func genByTemplate(t *template.Template, filename string, tab Table) {
 
 func genAddScoped(tbNames []string) {
 	var imports []string
+	imports = append(imports, "builder.Services.AddHttpContextAccessor();")
+	imports = append(imports, "")
+
 	imports = append(imports, "// Repo 注入")
 	for i := range tbNames {
 		im := "builder.Services.AddScoped<" + tbNames[i] + "Repo>();"
@@ -149,7 +173,19 @@ func genAddScoped(tbNames []string) {
 		imports = append(imports, im)
 	}
 
-	basePath := "./template/cSharp/"
+	imports = append(imports, "")
+	imports = append(imports, "// 中间件注入")
+	imports = append(imports, "app.UseMiddleware<AuditTrailMiddleware>();")
+	imports = append(imports, "app.UseMiddleware<ErrorHandlerMiddleware>();")
+
+	imports = append(imports, "")
+	imports = append(imports, "//AutoMapper 注入")
+	imports = append(imports, "AutoMapper.IConfigurationProvider config = new MapperConfiguration(")
+	imports = append(imports, "    cfg => { cfg.AddProfile<MappingProfile>(); }")
+	imports = append(imports, ");")
+	imports = append(imports, "builder.Services.AddSingleton(config);")
+	imports = append(imports, "builder.Services.AddScoped<IMapper, Mapper>();")
+
 	tab := Table{Imports: imports}
 	t1, _ := template.ParseFiles(basePath + "program.cs.template")
 	var b1 bytes.Buffer
@@ -175,7 +211,6 @@ func genRepo(tabs []Table) {
 
 	}
 
-	basePath := "./template/cSharp/"
 	tab := Table{Imports: imports, ProjectName: tabs[0].ProjectName}
 	t1, _ := template.ParseFiles(basePath + "repo.cs.template")
 	var b1 bytes.Buffer
@@ -185,23 +220,35 @@ func genRepo(tabs []Table) {
 }
 
 func genCommon(projectName string) {
-	basePath := "./template/cSharp/"
-	t2, _ := template.ParseFiles(basePath + "contextUtils.cs.template")
 	tab := Table{ProjectName: projectName}
-	genByTemplate(t2, "./internal/cSharp/common/"+"ContextUtils.cs", tab)
 
 	t1, _ := template.ParseFiles(basePath + "r_result.cs.template")
 	genByTemplate(t1, "./internal/cSharp/common/"+"R_Result.cs", tab)
+
+	t2, _ := template.ParseFiles(basePath + "contextUtils.cs.template")
+	genByTemplate(t2, "./internal/cSharp/common/"+"ContextUtils.cs", tab)
+
+	t3, _ := template.ParseFiles(basePath + "b_model.cs.template")
+	genByTemplate(t3, "./internal/cSharp/model/"+"BaseModel.cs", tab)
+}
+
+func genMiddleware(projectName string) {
+	t2, _ := template.ParseFiles(basePath + "auditTrailMiddleware.cs.template")
+	tab := Table{ProjectName: projectName}
+	genByTemplate(t2, "./internal/cSharp/Middlewares/"+"AuditTrailMiddleware.cs", tab)
+
+	t1, _ := template.ParseFiles(basePath + "errorMiddleware.cs.template")
+	genByTemplate(t1, "./internal/cSharp/Middlewares/"+"ErrorMiddleware.cs", tab)
 }
 
 func genMapper(tabs []Table) {
 	buffer := bytes.NewBuffer(nil)
 	array := make([]string, 0)
-	var space = "            "
+	var space = "      "
 	for _, tab := range tabs {
 		array = append(array, space)
-		array = append(array, space+"cfg.CreateMap<Add"+tab.TableName+"Req,"+tab.OriginalTableName+">();")
-		array = append(array, space+"cfg.CreateMap<Update"+tab.TableName+"Req,"+tab.OriginalTableName+">();")
+		array = append(array, space+"CreateMap<Add"+tab.TableName+"Req,"+tab.OriginalTableName+">();")
+		array = append(array, space+"CreateMap<Update"+tab.TableName+"Req,"+tab.OriginalTableName+">();")
 	}
 	tw := tablewriter.NewWriter(buffer)
 	tw.SetBorder(false)
@@ -214,8 +261,54 @@ func genMapper(tabs []Table) {
 	buffer.Reset()
 	buffer.WriteString(stContent)
 
-	basePath := "./template/cSharp/"
 	t2, _ := template.ParseFiles(basePath + "mapper.cs.template")
-	tab := Table{MapperConfiguration: stContent}
-	genByTemplate(t2, "./internal/cSharp/mapper/"+"MapperConfig.cs", tab)
+	tab := Table{MapperConfiguration: stContent, ProjectName: tabs[0].ProjectName}
+	genByTemplate(t2, "./internal/cSharp/mapper/"+"MappingProfile.cs", tab)
+}
+
+func genAuditLogMap(tabs []Table) {
+	methods := make([]string, 0)
+	methods = append(methods, "Add")
+	methods = append(methods, "Update")
+	methods = append(methods, "Delete")
+
+	logMaps := make([]string, 0)
+	logMaps = append(logMaps, "")
+
+	// 生成业务代码
+	for i := range tabs {
+		tb := tabs[i]
+		for m := range methods {
+			key := "/" + tb.TableName + "/" + methods[m] + tb.TableName
+			var val = ""
+			if methods[m] == "Add" {
+				val = "新增" + tb.TableComment
+			}
+			if methods[m] == "Update" {
+				val = "修改" + tb.TableComment
+			}
+			if methods[m] == "Delete" {
+				val = "删除" + tb.TableComment
+			}
+			// fmt.Println(" { \"" + key + "\", \"" + val + "\" },")
+			logMaps = append(logMaps, "        { \""+key+"\", \""+val+"\" },")
+		}
+	}
+
+	buffer := bytes.NewBuffer(nil)
+	tw := tablewriter.NewWriter(buffer)
+	tw.SetBorder(false)
+	tw.SetRowLine(false)
+	tw.SetAutoWrapText(false)
+	tw.SetColumnSeparator("\n")
+	tw.Append(logMaps)
+	tw.Render()
+	stContent := buffer.String()
+	buffer.Reset()
+	buffer.WriteString(stContent)
+
+	tab := Table{ProjectName: tabs[0].ProjectName, LogMaps: stContent}
+
+	t1, _ := template.ParseFiles(basePath + "const.cs.template")
+	genByTemplate(t1, "./internal/cSharp/common/"+"CommonConst.cs", tab)
 }
