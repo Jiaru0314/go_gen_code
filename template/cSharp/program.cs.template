@@ -1,3 +1,198 @@
-/// 下面代码拷贝到 Program.cs 类
+using {{.ProjectName}}.API.Controllers;
+using {{.ProjectName}}.API.Middlewares;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Http.Features;
+using Microsoft.OpenApi.Models;
+using Serilog;
+using Serilog.Events;
+
+//初始化待发布的构造函数，构造容器 builder
+var builder = WebApplication.CreateBuilder(args);
+
+// 配置 Serilog
+const string outputTemplate =
+    "{Timestamp:yyyy-MM-dd HH:mm:ss.fff} <{ThreadId}> [{Level:u3}] {Message:lj}{NewLine}{Exception}";
+Log.Logger = new LoggerConfiguration()
+    .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
+    .Enrich.FromLogContext()
+    .WriteTo.Console()
+    .WriteTo.File("logs/app_.log"
+        , rollingInterval: RollingInterval.Day
+        , outputTemplate: outputTemplate)
+    .CreateLogger();
+
+// 使用 Serilog
+builder.Host.UseSerilog();
+
+
+SM4Utils sm4Utils = new();
+// string a = "Data Source=172.20.16.197;Initial Catalog={{.ProjectName}};Persist Security Info=True;User ID=sa;Password=Yzj123!!";
+// a = sm4Utils.Encrypt_ECB(a);
+BaseDBConfig.ConnectionString =
+    sm4Utils.Decrypt_ECB(ConfigurationHelper.Configuration.GetConnectionString("DefaultConnection"));
+
+//在发布体容器上注入{{.ProjectName}}项目中Controllers项目内的所有控制器成员
+builder.Services.AddControllers();
+
+//.net 6.0 中.netcore核心进行了swagger的默认注入，将swagger作为默认API接口文档，无须再引用swagger
+// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+builder.Services.AddEndpointsApiExplorer();
+
+#region Configuration Injection List
+
+#region Step 1 : 定义Swagger展示信息
+
+const string swaggerTitle = "{{.ProjectName}} API Home";
+const string swaggerVersion = "1.0.0.0";
+const string swaggerDescription = "{{.ProjectName}} API Debug Home";
+
+#endregion
+
+#region Step 2 : 配置跨域处理
+
+// 配置跨域处理，允许任何来源,任何方法，任何头部信息，任何认证信息
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("CorsPolicy", corsPolicyBuilder =>
+    {
+        corsPolicyBuilder.AllowAnyMethod() //任何方法
+            .AllowAnyHeader() //任何头部
+            .SetIsOriginAllowed(_ => true) //任何来源
+            .AllowCredentials(); //任何认证信息
+    });
+}).Configure<FormOptions>(x =>
+{
+    x.MultipartBodyLengthLimit = 2_147_483_648; //SET MAX REQUEST LENGTH TO 2GB
+});
+
+#endregion
+
+#region Step 3 : 定义Swagger参数
+
+//注入swagger时添加了如下的显示参数
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc(swaggerVersion, new OpenApiInfo { Title = swaggerTitle, Version = swaggerVersion });
+    // c.OperationFilter<SwaggerFileUploadFilter>();
+    //Bearer 的scheme定义
+    var securityScheme = new OpenApiSecurityScheme()
+    {
+        Description = "JWT Authorization header using the Bearer scheme. Example: \"Authorization: Bearer {token}\"",
+        Name = "Authorization",
+        //参数添加在头部
+        In = ParameterLocation.Header,
+        //使用Authorize头部
+        Type = SecuritySchemeType.Http,
+        //内容为以 bearer开头
+        Scheme = "bearer",
+        BearerFormat = "JWT"
+    };
+
+    //把所有方法配置为增加bearer头部信息
+    var securityRequirement = new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "bearerAuth"
+                }
+            },
+            Array.Empty<string>()
+        }
+    };
+    var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    // 获取xml文件路径
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+    // 添加控制器层注释，true表示显示控制器注释
+    c.IncludeXmlComments(xmlPath, true);
+    //注册到swagger中
+    c.AddSecurityDefinition("bearerAuth", securityScheme);
+    c.AddSecurityRequirement(securityRequirement);
+});
+builder.Services.AddControllers().ConfigureApiBehaviorOptions(options =>
+{
+    options.SuppressModelStateInvalidFilter = true;
+});
+
+#endregion
+
+#region Step 4 : 服务注册到容器
+
 {{range $index, $value := .Imports}}
 {{$value}}{{end}}
+
+#endregion
+
+#region Step 5 : Define JWT Token Authenticate Policies JWT
+
+builder.Services.Configure<TokenMgmt>(ConfigurationHelper.Configuration.GetSection("tokenManagement"));
+var token = ConfigurationHelper.Configuration.GetSection("tokenManagement").Get<TokenMgmt>();
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IAuthenticateService, TokenAuthenticationService>();
+builder.Services.AddAuthentication(x =>
+{
+    x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    x.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+}).AddJwtBearer(x =>
+{
+    x.RequireHttpsMetadata = false;
+    x.SaveToken = true;
+    x.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(token.Secret)),
+        ValidIssuer = token.Issuer,
+        ValidAudience = token.Audience,
+        ValidateIssuer = false,
+        ValidateAudience = false
+    };
+});
+
+#endregion
+
+#endregion
+
+#region Application Do List
+
+var app = builder.Build();
+
+// Configure the HTTP request pipeline.
+if (app.Environment.IsDevelopment())
+{
+    app.UseDeveloperExceptionPage();
+}
+
+app.UseSwagger();
+app.UseSwaggerUI(c =>
+{
+    c.SwaggerEndpoint("/swagger/" + swaggerVersion + "/swagger.json", swaggerDescription);
+    //c.SwaggerEndpoint("/swagger/v1/swagger.json", swaggerDescription);
+});
+
+app.UseHttpsRedirection();
+
+#region token auth
+
+app.UseAuthentication();
+
+#endregion
+
+app.UseRouting();
+
+app.UseAuthorization();
+{{range $index, $value := .Middlewares}}
+{{$value}}{{end}}
+
+app.MapControllers();
+
+// 允许所有跨域，cors是在ConfigureServices方法中配置的跨域策略名称
+app.UseCors("CorsPolicy");
+
+app.UseEndpoints(endpoints => { endpoints.MapControllers(); });
+
+#endregion
+
+app.Run();

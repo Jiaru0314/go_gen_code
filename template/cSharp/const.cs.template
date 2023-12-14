@@ -21,6 +21,8 @@ public abstract class CommonConst
 
     public const string InitPassword = "InitialPassword";
 
+    public const string PasswordExpire = "PasswordExpire";
+
     // 定义只读的常量映射 用于操作日志相关
     public static readonly Dictionary<string, string> LogMap = new()
     {

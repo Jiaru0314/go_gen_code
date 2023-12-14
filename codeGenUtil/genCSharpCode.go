@@ -24,7 +24,8 @@ import (
 	"github.com/Jiaru0314/go_gen_code/internal/utils/color"
 )
 
-const basePath = "./template/cSharp/"
+// CSharp代码生成模板路径
+const cSharpTmplPath = "./template/cSharp/"
 
 func GenCSharpCode() {
 
@@ -62,20 +63,21 @@ func GenCSharpCode() {
 	for i := range tabs {
 		tb := tabs[i]
 		tb.BaseDefinition = genBaseDefinition(*db, tb.OriginalTableName, "CSharp")
-		genCSharpBizCode(tb)
+		genCSharpBizCode(tb, in.OutPath)
 	}
 
-	genAddScoped(tbNames)
+	genAddScoped(tbNames, in.OutPath, in.ProjectName)
 
-	genRepo(tabs)
+	genRepo(tabs, in.OutPath)
 
-	genCommon(in.ProjectName)
+	genCommon(in.ProjectName, in.OutPath)
 
-	genMiddleware(in.ProjectName)
+	genMiddleware(in.ProjectName, in.OutPath)
 
-	genMapper(tabs)
+	genMapper(tabs, in.OutPath)
 
-	genAuditLogMap(tabs)
+	genAuditLogMap(tabs, in.OutPath)
+
 	log.Printf(color.Magenta("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"))
 	log.Printf(color.Magenta("                        CSharp Code Gen End Cost :%s                                "), time.Since(start))
 	log.Printf(color.Magenta("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"))
@@ -95,6 +97,9 @@ func getTableDefinition(ctx context.Context, db gdb.DB, tbNames *[]string, table
 		}
 
 		newTbName := gstr.CaseCamel(tbName)
+		if newTbName == "" {
+			continue
+		}
 		tableComment := fieldMap[i]["Comment"].String()
 		if tableComment != "" && strings.Contains(tableComment, "表") {
 			tableComment = strings.ReplaceAll(tableComment, "表", "")
@@ -125,7 +130,7 @@ func getTables(ctx context.Context, db gdb.DB) string {
 	return res
 }
 
-func genCSharpBizCode(tab Table) {
+func genCSharpBizCode(tab Table, outPath string) {
 	// 设置是否包含 IsEnable/ Status 这类字段 特殊处理
 	if strings.Contains(tab.BaseDefinition, "IsEnable") {
 		tab.HasEnable = true
@@ -133,15 +138,15 @@ func genCSharpBizCode(tab Table) {
 		tab.HasStatus = true
 	}
 
-	t2, _ := template.ParseFiles(basePath + "model.cs.template")
-	t3, _ := template.ParseFiles(basePath + "controller.cs.template")
-	t4, _ := template.ParseFiles(basePath + "interface.cs.template")
-	t5, _ := template.ParseFiles(basePath + "processor.cs.template")
+	t2, _ := template.ParseFiles(cSharpTmplPath + "model.cs.template")
+	t3, _ := template.ParseFiles(cSharpTmplPath + "controller.cs.template")
+	t4, _ := template.ParseFiles(cSharpTmplPath + "interface.cs.template")
+	t5, _ := template.ParseFiles(cSharpTmplPath + "processor.cs.template")
 
-	genByTemplate(t2, "./internal/cSharp/model/"+tab.OriginalTableName+".cs", tab)
-	genByTemplate(t3, "./internal/cSharp/controller/"+tab.TableName+"Controller.cs", tab)
-	genByTemplate(t4, "./internal/cSharp/interface/I"+tab.TableName+"Processor.cs", tab)
-	genByTemplate(t5, "./internal/cSharp/processor/"+tab.TableName+"Processor.cs", tab)
+	genByTemplate(t2, outPath+"Models/"+tab.OriginalTableName+".cs", tab)
+	genByTemplate(t3, outPath+"API/Controllers/"+tab.TableName+"Controller.cs", tab)
+	genByTemplate(t4, outPath+"Interface/I"+tab.TableName+"Processor.cs", tab)
+	genByTemplate(t5, outPath+"Processor/"+tab.TableName+"Processor.cs", tab)
 }
 
 func genByTemplate(t *template.Template, filename string, tab Table) {
@@ -155,8 +160,10 @@ func genByTemplate(t *template.Template, filename string, tab Table) {
 	fileCreate(b, filename)
 }
 
-func genAddScoped(tbNames []string) {
+func genAddScoped(tbNames []string, outPath, projectName string) {
 	var imports []string
+	var middlewares []string
+
 	imports = append(imports, "builder.Services.AddHttpContextAccessor();")
 	imports = append(imports, "")
 
@@ -173,10 +180,9 @@ func genAddScoped(tbNames []string) {
 		imports = append(imports, im)
 	}
 
-	imports = append(imports, "")
-	imports = append(imports, "// 中间件注入")
-	imports = append(imports, "app.UseMiddleware<AuditTrailMiddleware>();")
-	imports = append(imports, "app.UseMiddleware<ErrorHandlerMiddleware>();")
+	middlewares = append(middlewares, "// 中间件注入")
+	middlewares = append(middlewares, "app.UseMiddleware<AuditTrailMiddleware>();")
+	middlewares = append(middlewares, "app.UseMiddleware<ErrorHandlerMiddleware>();")
 
 	imports = append(imports, "")
 	imports = append(imports, "//AutoMapper 注入")
@@ -186,15 +192,15 @@ func genAddScoped(tbNames []string) {
 	imports = append(imports, "builder.Services.AddSingleton(config);")
 	imports = append(imports, "builder.Services.AddScoped<IMapper, Mapper>();")
 
-	tab := Table{Imports: imports}
-	t1, _ := template.ParseFiles(basePath + "program.cs.template")
+	tab := Table{Imports: imports, ProjectName: projectName, Middlewares: middlewares}
+	t1, _ := template.ParseFiles(cSharpTmplPath + "program.cs.template")
 	var b1 bytes.Buffer
 	t1.Execute(&b1, tab)
-	fileCreate(b1, "./internal/cSharp/program.cs")
+	fileCreate(b1, outPath+"API"+"/program.cs")
 	log.Printf(color.Green("program.cs 生成完毕"))
 }
 
-func genRepo(tabs []Table) {
+func genRepo(tabs []Table, outPath string) {
 	var imports []string
 
 	for i := range tabs {
@@ -212,36 +218,36 @@ func genRepo(tabs []Table) {
 	}
 
 	tab := Table{Imports: imports, ProjectName: tabs[0].ProjectName}
-	t1, _ := template.ParseFiles(basePath + "repo.cs.template")
+	t1, _ := template.ParseFiles(cSharpTmplPath + "repo.cs.template")
 	var b1 bytes.Buffer
 	t1.Execute(&b1, tab)
-	fileCreate(b1, "./internal/cSharp/repo/repo.cs")
+	fileCreate(b1, outPath+"Modules"+"/ObjectRepository.cs.cs")
 	log.Printf(color.Green("repo.cs 生成完毕 "))
 }
 
-func genCommon(projectName string) {
+func genCommon(projectName string, outPath string) {
 	tab := Table{ProjectName: projectName}
 
-	t1, _ := template.ParseFiles(basePath + "r_result.cs.template")
-	genByTemplate(t1, "./internal/cSharp/common/"+"R_Result.cs", tab)
+	t1, _ := template.ParseFiles(cSharpTmplPath + "r_result.cs.template")
+	genByTemplate(t1, outPath+"Models/"+"R_Result.cs", tab)
 
-	t2, _ := template.ParseFiles(basePath + "contextUtils.cs.template")
-	genByTemplate(t2, "./internal/cSharp/common/"+"ContextUtils.cs", tab)
+	t2, _ := template.ParseFiles(cSharpTmplPath + "contextUtils.cs.template")
+	genByTemplate(t2, outPath+"Processor/"+"ContextUtils.cs", tab)
 
-	t3, _ := template.ParseFiles(basePath + "b_model.cs.template")
-	genByTemplate(t3, "./internal/cSharp/model/"+"BaseModel.cs", tab)
+	t3, _ := template.ParseFiles(cSharpTmplPath + "b_model.cs.template")
+	genByTemplate(t3, outPath+"Models/"+"BaseModel.cs", tab)
 }
 
-func genMiddleware(projectName string) {
-	t2, _ := template.ParseFiles(basePath + "auditTrailMiddleware.cs.template")
+func genMiddleware(projectName string, outPath string) {
+	t2, _ := template.ParseFiles(cSharpTmplPath + "auditTrailMiddleware.cs.template")
 	tab := Table{ProjectName: projectName}
-	genByTemplate(t2, "./internal/cSharp/Middlewares/"+"AuditTrailMiddleware.cs", tab)
+	genByTemplate(t2, outPath+"Middlewares/"+"AuditTrailMiddleware.cs", tab)
 
-	t1, _ := template.ParseFiles(basePath + "errorMiddleware.cs.template")
-	genByTemplate(t1, "./internal/cSharp/Middlewares/"+"ErrorMiddleware.cs", tab)
+	t1, _ := template.ParseFiles(cSharpTmplPath + "errorMiddleware.cs.template")
+	genByTemplate(t1, outPath+"Middlewares/"+"ErrorMiddleware.cs", tab)
 }
 
-func genMapper(tabs []Table) {
+func genMapper(tabs []Table, outPath string) {
 	buffer := bytes.NewBuffer(nil)
 	array := make([]string, 0)
 	var space = "      "
@@ -261,12 +267,12 @@ func genMapper(tabs []Table) {
 	buffer.Reset()
 	buffer.WriteString(stContent)
 
-	t2, _ := template.ParseFiles(basePath + "mapper.cs.template")
+	t2, _ := template.ParseFiles(cSharpTmplPath + "mapper.cs.template")
 	tab := Table{MapperConfiguration: stContent, ProjectName: tabs[0].ProjectName}
-	genByTemplate(t2, "./internal/cSharp/mapper/"+"MappingProfile.cs", tab)
+	genByTemplate(t2, outPath+"Models/Mapper/"+"MappingProfile.cs", tab)
 }
 
-func genAuditLogMap(tabs []Table) {
+func genAuditLogMap(tabs []Table, outPath string) {
 	methods := make([]string, 0)
 	methods = append(methods, "Add")
 	methods = append(methods, "Update")
@@ -309,6 +315,6 @@ func genAuditLogMap(tabs []Table) {
 
 	tab := Table{ProjectName: tabs[0].ProjectName, LogMaps: stContent}
 
-	t1, _ := template.ParseFiles(basePath + "const.cs.template")
-	genByTemplate(t1, "./internal/cSharp/common/"+"CommonConst.cs", tab)
+	t1, _ := template.ParseFiles(cSharpTmplPath + "const.cs.template")
+	genByTemplate(t1, outPath+"Modules/"+"CommonConst.cs", tab)
 }

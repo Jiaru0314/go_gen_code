@@ -15,12 +15,31 @@ namespace {{.ProjectName}}.Models
         /// </summary>
         public object resStr { get; set; }
 
+        public static R_SysResBase PageSuccess(object resStr, int totalSize)
+        {
+            var res = Success(resStr);
+            res.totalSize = totalSize;
+            return res;
+        }
+
         public static R_SysResBase Success(object resStr)
         {
             var res = new R_SysResBase
             {
                 resCode = "1",
                 resStr = resStr
+            };
+            return res;
+        }
+
+        public static R_SysResBase Success(object resStr, string msg)
+        {
+            var res = new R_SysResBase
+            {
+                resCode = "1",
+                resStr = resStr,
+                resTipCN = msg,
+                resTipEN = "Success"
             };
             return res;
         }
@@ -50,15 +69,5 @@ namespace {{.ProjectName}}.Models
         /// 返回提示EN
         /// </summary>
         public string resTipEN { get; set; }
-
-        /// <summary>
-        /// 返回参考值
-        /// </summary>
-        public string resRef { get; set; }
-
-        /// <summary>
-        /// 查询结果数量
-        /// </summary>
-        public int resNum { get; set; }
     }
 }

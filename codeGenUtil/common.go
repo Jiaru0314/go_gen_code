@@ -21,11 +21,15 @@ import (
 	"github.com/gogf/gf/v2/os/gfile"
 	"github.com/gogf/gf/v2/os/gtime"
 	"github.com/gogf/gf/v2/text/gstr"
+	"github.com/gogf/gf/v2/util/gutil"
 
 	"github.com/Jiaru0314/go_gen_code/gendao"
 	"github.com/Jiaru0314/go_gen_code/gendao/utils"
 	"github.com/Jiaru0314/go_gen_code/internal/utils/color"
 )
+
+// DefaultOutPath 默认输出路径
+const DefaultOutPath = "./code"
 
 type Table struct {
 	ProjectName         string
@@ -40,6 +44,7 @@ type Table struct {
 	LogMaps             string
 	HasEnable           bool
 	HasStatus           bool
+	Middlewares         []string
 }
 
 type BizRouter struct {
@@ -138,8 +143,20 @@ func loadConfig(ctx context.Context, in *gendao.CGenDaoInput) {
 		log.Fatalf(`数据库信息配置错误 "%s": %+v`, gendao.CGenDaoConfig, err)
 	}
 
+	if gutil.IsEmpty(in.ProjectName) {
+		log.Fatalf("配置信息错误 ProjectName 不能为空,请正确设置 ProjectName")
+	}
+
 	if len(strings.TrimSpace(in.Link)) == 0 {
 		log.Fatalf("数据库信息配置错误 link 为空")
+	}
+
+	if in.OutPath == "" {
+		log.Printf(color.Magenta("代码输出路径 OutPath 为空,使用默认输出路径: ")+color.Green("%s"), DefaultOutPath)
+		in.OutPath = DefaultOutPath + "/" + in.ProjectName + "/" + in.ProjectName + "."
+	} else {
+		log.Printf(color.Magenta("代码输出路径 OutPath : ")+color.Green("%s"), in.Path)
+		in.OutPath = in.OutPath + "/" + in.ProjectName + "/" + in.ProjectName + "."
 	}
 
 	log.Printf(color.Magenta("当前配置信息 link: ")+color.Green("%s"), in.Link)

@@ -56,16 +56,33 @@ namespace {{.ProjectName}}.Processor
                 queryStr, (req.PageIndex - 1) * req.PageSize, req.PageIndex * req.PageSize);
 
             var list = _{{.Path}}Repo.ListQuerySql(strBody, null).Result;
-            return R_SysResBase.Success(list);
+            var totalSize = _{{.Path}}Repo.Count(BuildCountStr(req), null);
+            return R_SysResBase.PageSuccess(list, totalSize);
+        }
+
+        private static string BuildCountStr(Query{{.ClassName}}Req req)
+        {
+            return new StringBuilder("SELECT COUNT(1) from {{.OriginalTableName}}")
+                .Append(BuildCondition(req)).ToString();
         }
 
         private string BulidQueryStr(Query{{.ClassName}}Req req)
         {
-            var sb = new StringBuilder("SELECT * from {{.OriginalTableName}}");
-            // if (!string.IsNullOrEmpty(req.Name))
-            // {
-            //     sb.Append($" WHERE Name like '%{req.Name}%'");
-            // }
+            return new StringBuilder("SELECT * from {{.OriginalTableName}}")
+                            .Append(BuildCondition(req)).ToString();
+        }
+
+        private static string BuildCondition(Query{{.ClassName}}Req req)
+        {
+            var sb = new StringBuilder(" WHERE 1 = 1");
+
+            {{- if .HasStatus }}
+
+            if (!string.IsNullOrEmpty(req.IsEnable))
+            {
+                sb.Append($" AND IsEnable = '{req.IsEnable}'");
+            }
+            {{end}}
             return sb.ToString();
         }
     }
